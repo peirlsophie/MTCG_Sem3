@@ -9,9 +9,9 @@ namespace MTCG_Peirl.Models
     public class Spellcard : Card
     {
         public Spellcard(string name, int damage, elementType type)
-            : base(name, damage, type) // Call the base Card constructor
+            : base(name, damage, type) 
         {
-            // Additional initialization for Spellcard can go here if needed
+            
         }
     }
 }

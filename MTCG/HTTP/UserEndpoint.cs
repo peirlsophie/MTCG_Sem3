@@ -22,11 +22,7 @@ namespace MTCG.Backend
         {
 
             
-        //method
-        //content
-        //path
-        // wenn post dann methode registeruser
-        // wenn get login
+ 
 
 
             if(request.Method == "POST" && request.Path == "/users")
@@ -47,7 +43,7 @@ namespace MTCG.Backend
 
         private void RegisterUser(HttpRequest request, HttpResponse response)
         {
-            // Deserialize the request content to extract the username and password
+            // extract username and password from request
             var userData = JsonSerializer.Deserialize<User>(request.Content);
             Console.WriteLine($"{request.Content} + {userData.Username} + {userData.Password}");
 
@@ -63,7 +59,7 @@ namespace MTCG.Backend
             // Check if the user already exists
             if (users.ContainsKey(userData.Username))
             {
-                response.statusCode = 409; // Conflict
+                response.statusCode = 409; 
                 response.statusMessage = "User already exists";
                 return;
             }
@@ -73,15 +69,15 @@ namespace MTCG.Backend
                 {
                     Console.WriteLine($"Username: {user.Key}, Password: {user.Value}");
                 }
-                this.users.Add(userData.Username,userData.Password); // You might want to hash the password in a real application
-                response.statusCode = 201; // Created
+                this.users.Add(userData.Username,userData.Password); 
+                response.statusCode = 201; 
             response.statusMessage = $"User created HTTP {response.statusCode}";
             }
         }
 
         private void LoginUser(HttpRequest request, HttpResponse response)
         {
-            // Deserialize the request content to extract the username and password
+            // extract username and password
             var userData = JsonSerializer.Deserialize<User>(request.Content);
 
             if (userData == null || string.IsNullOrEmpty(userData.Username) || string.IsNullOrEmpty(userData.Password))
@@ -91,20 +87,20 @@ namespace MTCG.Backend
                 return;
             }
 
-            // Validate the username and password
+            // Validate username and password
             if (users.TryGetValue(userData.Username, out string storedPassword) && storedPassword == userData.Password)
             {
-                // Generate a token for the user (this is just a simple example)
+                // Generate a token for the user
                 string token = $"{userData.Username}-mtcgToken{tokenCounter++}";
 
-                // Here you would normally return the token in the response body as well
-                response.statusCode = 200; // OK
+                
+                response.statusCode = 200; 
                 response.statusMessage = "Login successful " + token;
-                // Send the token in the response headers or body as needed
+               
             }
             else
             {
-                response.statusCode = 401; // Unauthorized
+                response.statusCode = 401; 
                 response.statusMessage = "Login failed";
             }
         }

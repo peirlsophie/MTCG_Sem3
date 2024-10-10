@@ -44,7 +44,8 @@ namespace MTCG.Backend
             request.processRequest();
             using var writer = new StreamWriter(clientSocket.GetStream()) { AutoFlush = true };
             var response = new HttpResponse(writer);
-            //if user 
+            
+            //checking for endpoint path
             if (request.Path == "/users" || request.Path == "/sessions")
             {
 
@@ -55,7 +56,7 @@ namespace MTCG.Backend
                 Console.WriteLine($"{request.Method} + {request.Path}");
                 response.statusCode = 404; // Not Found
                 response.statusMessage = "Endpoint not found";
-                response.SendResponse(); // Send response for not found
+                response.SendResponse(); 
                 return;
             }
 

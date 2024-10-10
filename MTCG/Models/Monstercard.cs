@@ -9,9 +9,9 @@ namespace MTCG_Peirl.Models
     public class Monstercard : Card
     {
         public Monstercard(string name, int damage, elementType type)
-            : base(name, damage, type) // Call the base Card constructor
+            : base(name, damage, type) 
         {
-            // Additional initialization for Monstercard can go here if needed
+            
         }
     }
 }

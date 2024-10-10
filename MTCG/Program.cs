@@ -7,13 +7,12 @@ namespace MTCG.Backend
     {
         static void Main(string[] args)
         {
-            // Define the IP address and port for the server
-            IPAddress ipAddress = IPAddress.Parse("127.0.0.1"); // Localhost
-            int port = 10001; // Port number
+            IPAddress ipAddress = IPAddress.Parse("127.0.0.1"); 
+            int port = 10001; 
 
-            // Create and run the HTTP server
+            // Create server
             HttpServer server = new HttpServer(ipAddress, port);
-            server.Run(); // This will block until the application is closed
+            server.Run(); 
         }
     }
 }
