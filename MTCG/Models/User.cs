@@ -7,25 +7,73 @@ using System.Threading.Tasks;
 
 namespace MTCG_Peirl.Models
 {
-    public class User 
+    public class User
     {
-        public string Username { get;  set; }
+        public string Username { get; set; }
         public string Password { get; set; }
-        public int highscore;
-        public int ELO;
-        public int coins;
-        public Stack<Card> ownedCards;
+        public int coins { get; private set; }
 
-        public User(string Username, string Password)
+        public int Highscore { get; private set; }
+
+        public int ELO { get; private set; }
+
+        public int games_played { get; private set; }
+        public int Wins { get; private set; }
+        public int Losses { get; private set; }
+
+        public Stack<Card> ownedCards { get; private set; }
+        
+
+        public User(string username, string password, int coins, int highscore, int elo, int games_played, int wins, int losses)
         {
-            this.Username = Username;
-            this.Password = Password;
-            highscore = 0;
-            ELO = 0;
-            coins = 20;
+            Username = username;
+            Password = password;
+            coins = coins;
+            Highscore = highscore;
+            ELO = elo;
+            games_played = games_played;
+            Wins = wins;
+            Losses = losses;
+
             ownedCards = new Stack<Card>();
+            
+        }
+        public string getUsername() {  return this.Username; }
+        
+       
+        public int GetELO() { return ELO; }
+        public int GetCoins() { return coins; }
+
+        public void UseCoins()
+        {
+            if (coins >= 5)
+            {
+                coins -= 5;
+                
+            }
+            return;
         }
 
+        public List<string> GetOwnedCards() 
+        { 
+            List<string> cardNames = new List<string>(); 
+            foreach (Card card in ownedCards) 
+            { 
+                cardNames.Add(card.Name); 
+            } 
+            return cardNames; 
+        }
+
+      
+        public void addPackageCardsToStack(Package newPackage)
+        {
+            foreach (Card card in newPackage.cards)
+            {
+                ownedCards.Push(card);
+            }
+        }        
+    
+    
     }
 
 

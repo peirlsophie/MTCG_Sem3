@@ -1,0 +1,15 @@
+-- Disable foreign key constraints temporarily
+SET session_replication_role = replica;
+
+-- Drop the tables
+DROP TABLE IF EXISTS trades CASCADE;
+DROP TABLE IF EXISTS packages CASCADE;
+DROP TABLE IF EXISTS scoreboard CASCADE;
+DROP TABLE IF EXISTS decks CASCADE;
+DROP TABLE IF EXISTS stacks CASCADE;
+DROP TABLE IF EXISTS cards CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS battles CASCADE;
+
+-- Re-enable foreign key constraints
+SET session_replication_role = DEFAULT;

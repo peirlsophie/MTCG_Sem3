@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MTCG.NewFolder;
+using MTCG_Peirl.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,9 +10,12 @@ namespace MTCG.Businesslogic
 {
     internal class Userhandler
     {
-        public void registerUser(string username, string password)
-        {
+        public Userhandler() { }
+       
 
-        }
+       
+
+
+
     }
 }

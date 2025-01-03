@@ -1,0 +1,66 @@
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    coins INT DEFAULT 20,
+    highscore INT DEFAULT 0,
+    elo INT DEFAULT 100,
+    games_played INT DEFAULT 0,
+    wins INT DEFAULT 0,
+    losses INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS cards (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    damage DECIMAL NOT NULL,
+    element_type VARCHAR(50) NOT NULL,
+    card_type VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stacks (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    card_id VARCHAR(255) NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+    in_deck BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS decks (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    card_id VARCHAR(255) NOT NULL REFERENCES cards(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS scoreboard (
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    elo INT NOT NULL DEFAULT 100
+);
+
+
+CREATE TABLE IF NOT EXISTS packages (
+    id SERIAL PRIMARY KEY,
+    card1_id VARCHAR(255) NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+    card2_id VARCHAR(255) NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+    card3_id VARCHAR(255) NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+    card4_id VARCHAR(255) NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+    card5_id VARCHAR(255) NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+    is_purchased BOOLEAN NOT NULL DEFAULT FALSE,
+    buyer_id INT REFERENCES users(id)
+);
+
+CREATE TABLE battles (
+    id SERIAL PRIMARY KEY,
+    player1 INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    player2 INT REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'waiting' CHECK (status IN ('waiting', 'in_progress', 'completed'))
+);
+
+
+
+CREATE TABLE IF NOT EXISTS trades (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    card_id VARCHAR(255) REFERENCES cards(id) ON DELETE CASCADE,
+    requirement_type VARCHAR(50) NOT NULL,
+    min_damage DECIMAL NOT NULL
+);

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.11.35222.181
+VisualStudioVersion = 17.11.35431.28
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MTCG", "MTCG\MTCG.csproj", "{F05654FB-924B-4406-AA73-B2BE8711E12C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MTCG", "MTCG.csproj", "{44D35363-820B-4CC6-AB9C-84339CDDA432}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F05654FB-924B-4406-AA73-B2BE8711E12C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F05654FB-924B-4406-AA73-B2BE8711E12C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F05654FB-924B-4406-AA73-B2BE8711E12C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F05654FB-924B-4406-AA73-B2BE8711E12C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44D35363-820B-4CC6-AB9C-84339CDDA432}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44D35363-820B-4CC6-AB9C-84339CDDA432}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44D35363-820B-4CC6-AB9C-84339CDDA432}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44D35363-820B-4CC6-AB9C-84339CDDA432}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {F14F8FCE-3FAE-403A-B6DB-1AA2B79CA5F3}
+		SolutionGuid = {3D8327BC-763A-48A0-932F-2DEBB5BCFDF1}
 	EndGlobalSection
 EndGlobal

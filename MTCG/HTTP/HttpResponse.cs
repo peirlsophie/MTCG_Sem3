@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MTCG.NewFolder
 {
-    internal class HttpResponse
+    public class HttpResponse
     {
         public StreamWriter writer;
         public int statusCode;

@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace MTCG_Peirl.Models
 {
-    internal class Package
+    public class Package
     {
-        List<Card> cards;
+        public List<Card> cards;
     }
 }

@@ -8,8 +8,8 @@ namespace MTCG_Peirl.Models
 {
     public class Monstercard : Card
     {
-        public Monstercard(string name, int damage, elementType type)
-            : base(name, damage, type) 
+        public Monstercard(string id, string name, double damage, ElementType elementType, string cardType)
+            : base(id, name, damage, elementType, cardType) 
         {
             
         }
