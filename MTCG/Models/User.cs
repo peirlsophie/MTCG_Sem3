@@ -11,17 +11,17 @@ namespace MTCG_Peirl.Models
     {
         public string Username { get; set; }
         public string Password { get; set; }
-        public int coins { get; private set; }
+        public int coins { get;  set; }
 
-        public int Highscore { get; private set; }
+        public int Highscore { get;  set; }
 
-        public int ELO { get; private set; }
+        public int ELO { get; set; }
 
-        public int games_played { get; private set; }
-        public int Wins { get; private set; }
-        public int Losses { get; private set; }
+        public int games_played { get;  set; }
+        public int Wins { get;  set; }
+        public int Losses { get;  set; }
 
-        public Stack<Card> ownedCards { get; private set; }
+        public Stack<Card> ownedCards { get;  set; }
         
 
         public User(string username, string password, int coins, int highscore, int elo, int games_played, int wins, int losses)
@@ -72,6 +72,8 @@ namespace MTCG_Peirl.Models
                 ownedCards.Push(card);
             }
         }        
+
+        
     
     
     }

@@ -25,6 +25,8 @@ namespace MTCG.Backend
         private readonly BattlesEndpoint battlesEndpoint;
         private readonly UserDatabase userDatabase;
         private readonly CardPackagesDatabase cardPackagesDb;
+        private readonly StatsScoreboardEndpoint statsScoreboardDb;
+        private readonly TradingsEndpoint tradingsEndpoint;
 
         public int statusCode;
         public string statusMessage { get; set; }
@@ -44,6 +46,8 @@ namespace MTCG.Backend
             userDatabase = new UserDatabase(dbAccess);
             cardPackagesDb = new CardPackagesDatabase(dbAccess);
             Battle battle = new Battle(dbAccess);
+            statsScoreboardDb = new StatsScoreboardEndpoint(dbAccess);
+            tradingsEndpoint = new TradingsEndpoint(dbAccess);
 
             try
             {
@@ -77,11 +81,12 @@ namespace MTCG.Backend
             request.processRequest();
             using var writer = new StreamWriter(clientSocket.GetStream()) { AutoFlush = true };
             var response = new HttpResponse(writer);
-            
-            //checking for endpoint path
-            if (request.Path == "/users" || request.Path == "/sessions")
-            {
 
+            string[] pathSegments = request.Path.Trim('/').Split('/');
+
+            //checking for endpoint path
+            if (request.Path == "/users" || request.Path == "/sessions" || (pathSegments[0] == "users" && pathSegments.Length == 2))
+            {
                 userEndpoint.HandleUserRequest(request, response);
             }
             else if (request.Path == "/packages" || request.Path == "/transactions/packages")
@@ -95,6 +100,14 @@ namespace MTCG.Backend
             else if(request.Path == "/battles")
             {
                 battlesEndpoint.handleBattlesRequests(request, response);
+            }
+            else if (request.Path == "/stats" || request.Path == "/scoreboard")
+            {
+                statsScoreboardDb.handleStatsScoreboardRequests(request, response);
+            }
+            else if(request.Path == "/tradings")
+            {
+                tradingsEndpoint.handleTradingsRequests(request, response);
             }
             else
             {

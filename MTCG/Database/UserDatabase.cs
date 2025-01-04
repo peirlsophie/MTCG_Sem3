@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MTCG_Peirl.Models;
+using System.Numerics;
 
 namespace MTCG.Database
 {
@@ -14,7 +15,8 @@ namespace MTCG.Database
         private readonly DatabaseAccess dbAccess;
         public UserDatabase(DatabaseAccess dbAccess)
         {
-            this.dbAccess = dbAccess;
+            this.dbAccess = dbAccess ?? throw new ArgumentNullException(nameof(dbAccess));
+
         }
 
         public bool UserExists(string username)
@@ -291,7 +293,7 @@ namespace MTCG.Database
             using (var connection = dbAccess.GetConnection())
             {
                 connection.Open();
-                string query = "SELECT username FROM users WHERE id = @id;";
+                string query = @"SELECT username FROM users WHERE id = @id;";
 
                 using (var command = new NpgsqlCommand(query, connection))
                 {
@@ -310,6 +312,152 @@ namespace MTCG.Database
                     }
                 }
             }
+        }
+
+        public void changeUserStats(User player)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        string updateStats = @"UPDATE users 
+                                             SET elo = @elo, games_played = @games_played, wins = @wins, losses = @losses 
+                                             WHERE username = @username;";
+
+                        using (var command = new NpgsqlCommand(updateStats, connection))
+                        {
+                            command.Parameters.AddWithValue("elo", player.ELO);
+                            command.Parameters.AddWithValue("games_played", player.games_played);
+                            command.Parameters.AddWithValue("wins", player.Wins);
+                            command.Parameters.AddWithValue("losses", player.Losses);
+                            command.Parameters.AddWithValue("username", player.Username);
+
+                            command.ExecuteNonQuery();
+                        }
+                        transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        Console.WriteLine($"Error during transaction: {ex.Message}");
+                        throw new Exception("An error occurred while changing the userstats", ex);
+                    }
+
+                }
+
+            }
+        }
+
+        public void changeUserBioAndImage(string username,string name, string bio, string image)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    Console.WriteLine($"before enter in db username is:{username}");
+                    Console.WriteLine($"before enter in db bio is:{bio}");
+                    Console.WriteLine($"before enter in db image is:{image}");
+                    try
+                    {
+                        string updateBioImage = @"UPDATE users 
+                                             SET name = @name, bio = @bio, image = @image
+                                             WHERE username = @username;";
+
+                        using (var command = new NpgsqlCommand(updateBioImage, connection))
+                        {
+                            command.Parameters.AddWithValue("name", name);
+                            command.Parameters.AddWithValue("bio", bio);
+                            command.Parameters.AddWithValue("image", image);
+                            command.Parameters.AddWithValue("username", username);
+                            command.ExecuteNonQuery();
+                        }
+                        transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        Console.WriteLine($"Error during transaction: {ex.Message}");
+                        throw new Exception("An error occurred while changing the userstats", ex);
+                    }
+
+                }
+            }
+        }
+
+        public List<string> getUserData(string username)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                connection.Open();
+                string query = @"SELECT name, bio, image
+                                 FROM users 
+                                 WHERE username = @username;";
+
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("username", username);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            List<string> userData = new List<string>
+                            {
+                                reader.IsDBNull(0) ? "N/A" : reader.GetString(0),
+                                reader.IsDBNull(1) ? "N/A" : reader.GetString(1),
+                                reader.IsDBNull(2) ? "N/A" : reader.GetString(2)
+                            };
+
+                            return userData;
+                        }
+                        else
+                        {
+                            return new List<string>();
+                        }
+                    }
+                }
+            }
+
+        }
+        public List<int> getUserStats(string username)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                connection.Open();
+                string query = @"SELECT elo, games_played, wins, losses
+                                 FROM users 
+                                 WHERE username = @username;";
+
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("username", username);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            List<int> userStats = new List<int>
+                            {
+                                reader.GetInt32(0),
+                                reader.GetInt32(1),
+                                reader.GetInt32(2),
+                                reader.GetInt32(3)
+                            };
+
+                            return userStats;
+                        }
+                        else
+                        {
+                            return new List<int>();
+                        }
+                    }
+                }
+            }
+
         }
 
     }

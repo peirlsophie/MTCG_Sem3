@@ -29,20 +29,45 @@ namespace MTCG.Businesslogic
         public void startBattle(string username)
         {
             int userIdFirstPlayer = cardPackagesDb.findUserIdByName(username);
-            Console.WriteLine("kommt es hierher / userfinden");
-
+            
             userDatabase.enterPlayersInBattle(userIdFirstPlayer);
             
         }
 
-        public void playBattleRound(string username1, string username2)
+        public User playBattleRound(User user1, User user2)
         {
-           
 
+            List<Card> cards = choosePlayingCards(user1.Username, user2.Username);
 
+            Card card1 = cards[0];
+            Card card2 = cards[1];
 
+            Card winnercard = FightingLogic(card1, card2);
+
+            if(winnercard == null)
+            {
+                return null;
+            }
+            else
+            {
+                if(winnercard.Id == card1.Id)
+                {
+                    addLoserCardToWinnerDeck(card2, user1);
+                    removeLoserCardFromLoserDeck(card2, user2);
+                    return user1;
+                }
+                else
+                {
+                    addLoserCardToWinnerDeck(card1, user2);
+                    removeLoserCardFromLoserDeck(card1, user1);
+                    return user2;
+                }
+
+            }
 
         }
+
+        
 
         public List<Card> choosePlayingCards(string username1, string username2)
         {
@@ -75,9 +100,11 @@ namespace MTCG.Businesslogic
             
             int userId1 = cardPackagesDb.findUserIdByName(username1);
             User player1 = userDatabase.getUserObjectById(userId1);
+            addDeckCardsToUserDeck(player1);
 
             int userId2 = cardPackagesDb.findUserIdByName(username2);
             User player2 = userDatabase.getUserObjectById(userId2);
+            addDeckCardsToUserDeck(player2);
 
             Console.WriteLine($"Player1 is: {player1.Username}, Player2 is: {player2.Username}");
             List<User> users = new List<User> { player1, player2 };
@@ -85,53 +112,123 @@ namespace MTCG.Businesslogic
             return users;
         }
 
-        public void FightingLogic(Card card1, Card card2)
+        
+
+        public void addLoserCardToWinnerDeck(Card card, User winner)
+        {
+            winner.ownedCards.Push(card);
+        }
+        public void removeLoserCardFromLoserDeck(Card card, User loser)
+        {
+            Stack<Card> tempStack = new Stack<Card>();
+
+            // Transfer cards to temporary stack until the target card is found
+            while (loser.ownedCards.Count > 0)
+            {
+                Card currentCard = loser.ownedCards.Pop();
+                if (currentCard.Id != card.Id)
+                {
+                    tempStack.Push(currentCard);
+                }
+                else
+                {
+                    Console.WriteLine($"Card {card.Name} has been removed from {loser.Username}'s deck.");
+                    break;
+                }
+            }
+
+            // Return cards back to the original stack (reversed back to original order)
+            while (tempStack.Count > 0)
+            {
+                loser.ownedCards.Push(tempStack.Pop());
+            }
+        }
+
+
+        public void addDeckCardsToUserDeck(User player)
+        {
+            List<string> cardIds = cardPackagesDb.findOwnedCardIdsInDecks(player.Username);
+            foreach (var cardId in cardIds)
+            {
+                Card card = cardPackagesDb.getCardFromDeckForBattle(cardId);
+                player.ownedCards.Push(card);
+            }
+
+        }
+
+        public Card FightingLogic(Card card1, Card card2)
         {
             Console.WriteLine($"Card {card1.Name} has a damage value of {card1.Damage}.");
             Console.WriteLine($"Card {card2.Name} has a damage value of {card2.Damage}.");
 
-            var doubleDamage_halfedDamage1 = checkElementEffects(card1.ElementType, card2.ElementType);
-
             Console.WriteLine($"Card {card1.Name} is of the element {card1.ElementType}.");
-
-            var doubleDamage_halfedDamage2 = checkElementEffects(card2.ElementType, card1.ElementType);
-
             Console.WriteLine($"Card {card2.Name} is of the element {card2.ElementType}.");
 
             bool player1Wins = checkSpecialMonsterEffects(card1, card2);
+            bool player2Wins = checkSpecialMonsterEffects(card2, card1);
 
             Console.WriteLine($"Card {card1.Name} is of type {card1.CardType}.");
-
-            bool player2Wins = checkSpecialMonsterEffects(card1, card2);
-
             Console.WriteLine($"Card {card2.Name} is of type {card2.CardType}.");
 
-            //Anpassung damage Wert je nach bool ob doubled/halfed#
+           
 
-            if(doubleDamage_halfedDamage1 == (false, false) && player1Wins == false && player2Wins == false)
-            {
-                
+            Card winnercard = null;
+                      
+            //determine winnercard depending on instant wins
 
-            }
-
-
-        }
-
-        public Card determineWinnerCard(Card card1, Card card2)
-        {
-            if(card1.Damage > card2.Damage)
+            if (player1Wins == true && player2Wins == false)
             {
                 return card1;
             }
-            else if(card1.Damage < card2.Damage)
+            else if (player1Wins == false && player2Wins == true)
             {
                 return card2;
             }
-            else if(card1.Damage == card2.Damage)
+
+            var doubleDamage_halfedDamage1 = checkElementEffects(card1.ElementType, card2.ElementType);
+            var doubleDamage_halfedDamage2 = checkElementEffects(card2.ElementType, card1.ElementType);
+
+            // real damage value should not be changed
+            var card1DamageTemp = card1.Damage;
+            var card2DamageTemp = card2.Damage;
+
+            //Anpassung damage Wert je nach bool ob doubled/halfed
+
+            if (doubleDamage_halfedDamage1 == (true, false))
+            {
+                card1DamageTemp *= 2;
+            }
+            else if (doubleDamage_halfedDamage1 == (false, true))
+            {
+                card1DamageTemp /= 2;
+            }
+            else if (doubleDamage_halfedDamage2 == (true, false))
+            {
+                card2DamageTemp *= 2;
+            }
+            else if (doubleDamage_halfedDamage2 == (false, true))
+            {
+                card2DamageTemp /= 2;
+            }
+
+            return determineWinnerCard(card1, card2, card1DamageTemp, card2DamageTemp); 
+            
+        }
+
+        public Card determineWinnerCard(Card card1, Card card2, double damage1, double damage2)
+        {
+            if(damage1 > damage2)
+            {
+                return card1;
+            }
+            else if(damage1 < damage2)
+            {
+                return card2;
+            }
+            else
             {
                 return null;
             }
-
         }
 
         public (bool doubleDamage, bool halfedDamage) checkElementEffects(ElementType type1, ElementType type2)

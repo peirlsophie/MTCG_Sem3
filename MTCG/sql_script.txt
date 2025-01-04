@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
     elo INT DEFAULT 100,
     games_played INT DEFAULT 0,
     wins INT DEFAULT 0,
-    losses INT DEFAULT 0
+    losses INT DEFAULT 0,
+    name VARCHAR(255) DEFAULT '-',
+    bio VARCHAR(255) DEFAULT '-',
+    image VARCHAR(255) DEFAULT '-'
 );
 
 CREATE TABLE IF NOT EXISTS cards (
@@ -15,14 +18,14 @@ CREATE TABLE IF NOT EXISTS cards (
     name VARCHAR(255) NOT NULL,
     damage DECIMAL NOT NULL,
     element_type VARCHAR(50) NOT NULL,
-    card_type VARCHAR(50) NOT NULL
+    card_type VARCHAR(50) NOT NULL,
+    in_deck BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS stacks (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    card_id VARCHAR(255) NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
-    in_deck BOOLEAN DEFAULT FALSE
+    card_id VARCHAR(255) NOT NULL REFERENCES cards(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS decks (
@@ -58,7 +61,7 @@ CREATE TABLE battles (
 
 
 CREATE TABLE IF NOT EXISTS trades (
-    id SERIAL PRIMARY KEY,
+    Id VARCHAR(255) PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     card_id VARCHAR(255) REFERENCES cards(id) ON DELETE CASCADE,
     requirement_type VARCHAR(50) NOT NULL,

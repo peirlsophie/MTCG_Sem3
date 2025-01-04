@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using MTCG.Database;
+using MTCG.HTTP;
 using MTCG.NewFolder;
 using MTCG_Peirl.Models;
 using Npgsql;
@@ -16,19 +17,23 @@ namespace MTCG.Backend
     {
         private static int tokenCounter = 0;
         private readonly UserDatabase userDatabase;
-
+        private readonly PackagesEndpoint packagesEndpoint;
+        
         private readonly DatabaseAccess dbAccess;
 
 
         public UserEndpoint(DatabaseAccess dbAccess)
         {
             this.userDatabase = new UserDatabase(dbAccess);
+            this.packagesEndpoint = new PackagesEndpoint(dbAccess);
             this.dbAccess = dbAccess ?? throw new ArgumentNullException(nameof(dbAccess));
 
         }
 
         public void HandleUserRequest(HttpRequest request, HttpResponse response)
         {
+            string[] pathSegments = request.Path.Trim('/').Split('/');
+            Console.WriteLine($"Path Segments: {string.Join(", ", pathSegments)}");
 
             if (request.Method == "POST" && request.Path == "/users")
             {
@@ -38,6 +43,14 @@ namespace MTCG.Backend
             {
                 LoginUser(request, response);
             }
+            else if (request.Method == "PUT" && pathSegments.Length == 2 && pathSegments[0] == "users" )
+            {
+                EditUser(request, response, pathSegments[1]);
+            }
+            else if (request.Method == "GET" && pathSegments.Length == 2 && pathSegments[0] == "users")
+            {
+                ShowUserData(request, response, pathSegments[1]);
+            }
             else
             {
                 Console.WriteLine($"{request.Method} + {request.Path}");
@@ -46,6 +59,7 @@ namespace MTCG.Backend
             }
         }
 
+       
         public void RegisterUser(HttpRequest request, HttpResponse response)
         {
             // extract username and password from request
@@ -105,12 +119,11 @@ namespace MTCG.Backend
                 return "";
             }
 
-            // Retrieve the stored hashed password from the database
             string storedHash = userDatabase.GetStoredPasswordHash(userData.Username);
 
             if (storedHash == null)
             {
-                response.statusCode = 401; // Unauthorized
+                response.statusCode = 401; 
                 response.statusMessage = $"HTTP {response.statusCode} Login failed: User not found";
                 return "";
             }
@@ -134,5 +147,79 @@ namespace MTCG.Backend
             }
         }
 
+        public void EditUser(HttpRequest request, HttpResponse response, string pathname)
+        {
+            try
+            {
+                var userData = JsonSerializer.Deserialize<Dictionary<string, string>>(request.Content);
+
+                if (userData == null ||
+                    !userData.ContainsKey("Name") ||
+                    !userData.ContainsKey("Bio") ||
+                    !userData.ContainsKey("Image"))
+                {
+                    response.statusCode = 400;
+                    response.statusMessage = "Invalid input - Missing required fields.";
+                    return;
+                }
+
+                string username = userData["Name"];
+                string bio = userData["Bio"];
+                string image = userData["Image"];
+
+                //check name vom path gegen token!! noch erledigen
+                string tokenUsername = packagesEndpoint.extractUsernameFromToken(request);
+
+                // check token authorization
+                var token = request.Headers["Authorization"];
+                if (string.IsNullOrEmpty(token) || !token.Contains("Bearer") || !userDatabase.UserExists(pathname))
+                {
+                    response.statusCode = 401;
+                    response.statusMessage = "Unauthorized: Missing or invalid token";
+                    return;
+                }
+
+                if (tokenUsername != pathname)
+                {
+                    response.statusCode = 403;
+                    response.statusMessage = "Unauthorized: Cannot edit another users profile";
+                    return;
+                }
+
+                userDatabase.changeUserBioAndImage(tokenUsername, username, bio, image);
+
+                response.statusCode = 200;
+                response.statusMessage = $"User profile updated successfully for {username}";
+            }
+            catch (Exception ex)
+            {
+                response.statusCode = 500;
+                response.statusMessage = "An error occurred while updating the user: " + ex.Message;
+            }
+        }
+
+        public void ShowUserData(HttpRequest request, HttpResponse response, string pathname)
+        {
+            try
+            {
+                string username = packagesEndpoint.extractUsernameFromToken(request);
+                Console.WriteLine($"username is:{username}");
+                if (username == null || !userDatabase.UserExists(pathname))
+                {
+                    response.statusCode = 401;
+                    response.statusMessage = $"HTTP {response.statusCode} Unauthorized";
+                    return;
+                }
+                var userdata = userDatabase.getUserData(username);
+                                    
+                response.statusCode = 200;
+                response.statusMessage = $"HTTP {response.statusCode} Name: {userdata[0]} , Bio: {userdata[1]} , Image: {userdata[2]} ";
+            }
+            catch (Exception ex)
+            {
+                response.statusCode = 500;
+                response.statusMessage = "An error occurred while getting the userdata " + ex.Message;
+            }
+        }
     }
 }

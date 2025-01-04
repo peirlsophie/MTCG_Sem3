@@ -180,7 +180,7 @@ namespace MTCG.Database
                 {
                     foreach (var card in packageData)
                     {
-                        string query = "INSERT INTO stacks (user_id, card_id, in_deck) VALUES (@user_id, @card_id, false);";
+                        string query = "INSERT INTO stacks (user_id, card_id) VALUES (@user_id, @card_id);";
                         using (var command = new NpgsqlCommand(query, connection))
                         {
                             command.Parameters.AddWithValue("user_id", userId);
@@ -320,7 +320,7 @@ namespace MTCG.Database
                             using (var command = new NpgsqlCommand(addCardsInDeck, connection, transaction))
                             {
                                 command.Parameters.AddWithValue("user_id", userId);
-                                command.Parameters.AddWithValue("card_id", cardId); 
+                                command.Parameters.AddWithValue("card_id", cardId);
 
                                 Console.WriteLine("Executing SQL: " + addCardsInDeck);
                                 foreach (NpgsqlParameter param in command.Parameters)
@@ -333,6 +333,7 @@ namespace MTCG.Database
                         }
 
                         transaction.Commit();
+                        markCardAsInDeck(cardIds);
                         return true;
                     }
                     catch (Exception ex)
@@ -340,14 +341,54 @@ namespace MTCG.Database
                         transaction.Rollback();
                         Console.WriteLine($"Error while saving cards to stack: {ex.Message}");
                         throw;
-                        
+
                     }
+
                 }
-
-
             }
+        }
 
+        public void markCardAsInDeck(List<string> cardIds)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                connection.Open();
 
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        foreach (var cardId in cardIds)
+                        {
+                            string markAsInDeck = "UPDATE cards SET in_deck = @in_deck WHERE card_id = @card_id;";
+                            using (var command = new NpgsqlCommand(markAsInDeck, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("in_deck", false);
+                                command.Parameters.AddWithValue("card_id", cardId);
+
+                                Console.WriteLine("Executing SQL: " + markAsInDeck);
+                                foreach (NpgsqlParameter param in command.Parameters)
+                                {
+                                    Console.WriteLine($"{param.ParameterName}: {param.Value}");
+                                }
+
+                                command.ExecuteNonQuery();
+                            }
+                        }
+
+                        transaction.Commit();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        Console.WriteLine($"Error while marking card as in_deck: {ex.Message}");
+                        throw;
+
+                    }
+
+                }
+            }
         }
 
         public int checkDeckSize(string username)
@@ -357,7 +398,7 @@ namespace MTCG.Database
                 connection.Open();
                 int userId = findUserIdByName(username);
                 string query = "SELECT COUNT(*) FROM decks WHERE user_id = @user_id;";
-                
+
                 using (var command = new NpgsqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("user_id", userId);
@@ -370,14 +411,15 @@ namespace MTCG.Database
 
         public Card getCardFromDeckForBattle(string cardId)
         {
-            string query = @"
-            SELECT id, name, damage, element_type, card_type
-            FROM cards 
-            WHERE id = @id;";
+
 
             using (var connection = dbAccess.GetConnection())
             {
                 connection.Open();
+                string query = @"
+                    SELECT id, name, damage, element_type, card_type
+                    FROM cards 
+                    WHERE id = @id;";
                 using (var command = new NpgsqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("id", cardId);

@@ -5,12 +5,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MTCG.Businesslogic
-{
-    internal class Trade
-    {
-        private User trader1;
-        private User trader2;
-        private string requirement;
-    }
+namespace MTCG.Businesslogic 
+{ 
+    public class Trade 
+    { 
+        public string Id{ get; set; } 
+        public string CardToTrade { get; set; } 
+        public string Type { get; set; } 
+        public int MinimumDamage { get; set; } 
+       
+        public Trade(string Id, string CardToTrade, string Type, int MinimumDamage) 
+        {
+            Id = Id;
+            CardToTrade = CardToTrade;
+            Type = Type;
+            MinimumDamage = MinimumDamage;
+        } 
+    } 
 }
