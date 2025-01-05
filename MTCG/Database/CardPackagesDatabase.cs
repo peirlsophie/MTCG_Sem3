@@ -103,10 +103,10 @@ namespace MTCG.Database
                     {
 
                         string selectQuery = @"
-                    SELECT id FROM packages 
-                    WHERE is_purchased = false 
-                    LIMIT 1 
-                    FOR UPDATE SKIP LOCKED;";
+                        SELECT id FROM packages 
+                        WHERE is_purchased = false 
+                        LIMIT 1 
+                        FOR UPDATE SKIP LOCKED;";
 
                         int packageId;
                         using (var selectCommand = new NpgsqlCommand(selectQuery, connection, transaction))
@@ -126,9 +126,9 @@ namespace MTCG.Database
 
 
                         string updateQuery = @"
-                    UPDATE packages 
-                    SET is_purchased = true, buyer_id = @buyer_id 
-                    WHERE id = @id;";
+                        UPDATE packages 
+                        SET is_purchased = true, buyer_id = @buyer_id 
+                        WHERE id = @id;";
 
                         using (var updateCommand = new NpgsqlCommand(updateQuery, connection, transaction))
                         {
@@ -319,12 +319,11 @@ namespace MTCG.Database
         }
 
 
-        public bool saveDeckConfig(List<string> cardIds, string username)
+        public bool saveDeckConfig(List<string> cardIds, int userid)
         {
             using (var connection = dbAccess.GetConnection())
             {
                 connection.Open();
-                int userId = findUserIdByName(username);
                 using (var transaction = connection.BeginTransaction())
                 {
                     try
@@ -334,7 +333,7 @@ namespace MTCG.Database
                             string addCardsInDeck = "INSERT INTO decks (user_id, card_id) VALUES (@user_id, @card_id);";
                             using (var command = new NpgsqlCommand(addCardsInDeck, connection, transaction))
                             {
-                                command.Parameters.AddWithValue("user_id", userId);
+                                command.Parameters.AddWithValue("user_id", userid);
                                 command.Parameters.AddWithValue("card_id", cardId);
 
                                 Console.WriteLine("Executing SQL: " + addCardsInDeck);
@@ -342,23 +341,21 @@ namespace MTCG.Database
                                 {
                                     Console.WriteLine($"{param.ParameterName}: {param.Value}");
                                 }
-
                                 command.ExecuteNonQuery();
                             }
                         }
 
                         transaction.Commit();
-                        markCardAsInDeck(cardIds);
+                        Console.WriteLine("Transaction committed successfully.");
+
                         return true;
                     }
                     catch (Exception ex)
                     {
                         transaction.Rollback();
                         Console.WriteLine($"Error while saving cards to stack: {ex.Message}");
-                        throw;
-
+                        return false; 
                     }
-
                 }
             }
         }
@@ -375,11 +372,11 @@ namespace MTCG.Database
                     {
                         foreach (var cardId in cardIds)
                         {
-                            string markAsInDeck = "UPDATE cards SET in_deck = @in_deck WHERE card_id = @card_id;";
+                            string markAsInDeck = "UPDATE cards SET in_deck = @in_deck WHERE id = @id;";
                             using (var command = new NpgsqlCommand(markAsInDeck, connection, transaction))
                             {
                                 command.Parameters.AddWithValue("in_deck", false);
-                                command.Parameters.AddWithValue("card_id", cardId);
+                                command.Parameters.AddWithValue("id", cardId);
 
                                 Console.WriteLine("Executing SQL: " + markAsInDeck);
                                 foreach (NpgsqlParameter param in command.Parameters)

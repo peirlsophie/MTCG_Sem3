@@ -1,4 +1,5 @@
-﻿using MTCG.Businesslogic;
+﻿using Azure.Core;
+using MTCG.Businesslogic;
 using MTCG.Database;
 using MTCG.NewFolder;
 using MTCG_Peirl.Models;
@@ -27,20 +28,20 @@ namespace MTCG.HTTP
 
         }
 
-        public void handleBattlesRequests(HttpRequest request, HttpResponse response)
+        public async Task handleBattlesRequests(HttpRequest request, HttpResponse response)
         {
             if (request.Method == "POST" && request.Path == "/battles")
             {
                 //handle battle logic
                 startBattle(request, response);
-                
             }
             else
             {
-                Console.WriteLine($"{request.Method} + {request.Path}");
                 response.statusCode = 400;
                 response.statusMessage = $"HTTP {response.statusCode} Bad request";
             }
+           
+
         }
 
         public void startBattle(HttpRequest request, HttpResponse response)
@@ -60,7 +61,7 @@ namespace MTCG.HTTP
 
                 List<string> players = userDatabase.showPlayersInBattle();
                
-                List<User> playerObjects = battle.createPlayerObjects(players[0], players[1]);
+                List<User> playerObjects = battle.createPlayerObjects(players[0], players[1], response);
 
 
                 User player1 = playerObjects[0];
@@ -70,27 +71,27 @@ namespace MTCG.HTTP
                 {
                     if (player1.ownedCards.Count == 0 || player2.ownedCards.Count == 0)
                     {
-                        Console.WriteLine("A player's deck is empty, stopping the battle.");
+                        response.statusMessage = $"HTTP {response.statusCode} A players deck is empty, battle stopped.";
                         break;
                     }
                     roundCounter++;
-                    Console.WriteLine($"Starting round {roundCounter}");
+                    response.statusMessage = $"Starting round {roundCounter}";
 
-                    User winner = battle.playBattleRound(player1, player2);
+                    User winner = battle.playBattleRound(player1, player2, response);
 
                     if (winner == player1)
                     {
                         player1WinCount++;
-                        Console.WriteLine($"{player1.Username} wins round {roundCounter}");
+                        response.statusMessage = $"{player1.Username} wins round {roundCounter}";
                     }
                     else if (winner == player2)
                     {
                         player2WinCount++;
-                        Console.WriteLine($"{player2.Username} wins round {roundCounter}");
+                        response.statusMessage= $"{player2.Username} wins round {roundCounter}";
                     }
                     else
                     {
-                        Console.WriteLine($"Round {roundCounter} was a draw.");
+                        response.statusMessage = $"Round {roundCounter} was a draw.";
                     }
                 }
 
@@ -98,26 +99,25 @@ namespace MTCG.HTTP
                 if (player1WinCount > player2WinCount)
                 {
                     response.statusCode = 200;
-                    response.statusMessage = $"{player1.Username} wins the battle with {player1WinCount} rounds won!";
+                    response.statusMessage = $"HTTP {response.statusCode} {player1.Username} wins the battle with {player1WinCount} rounds won!";
                     eloCalcUsers(player1, player2);
+
                 }
                 else if (player2WinCount > player1WinCount)
                 {
                     response.statusCode = 200;
-                    response.statusMessage = $"{player2.Username} wins the battle with {player2WinCount} rounds won!";
+                    response.statusMessage = $"HTTP {response.statusCode} {player2.Username} wins the battle with {player2WinCount} rounds won!";
                     eloCalcUsers(player2, player1);
-                    Console.WriteLine($"Player1 stats: gamesplayed {player1.games_played}, wins:{player1.Wins}, losses: {player1.Losses}, elo: {player1.ELO}");
-                    Console.WriteLine($"Player2 stats: gamesplayed {player2.games_played}, wins:{player2.Wins}, losses: {player2.Losses}, elo: {player2.ELO}");
                 }
                 else
                 {
                     response.statusCode = 200;
-                    response.statusMessage = "The battle ended in a draw!";
-
+                    response.statusMessage = $"HTTP {response.statusCode} The battle ended in a draw!";
                 }
 
-                 userDatabase.changeUserStats(player1);
-                 userDatabase.changeUserStats(player2);
+                userDatabase.changeUserStats(player1);
+                userDatabase.changeUserStats(player2);
+
                 var userId1 = cardPackagesDb.findUserIdByName(player1.Username);
                 var userId2 = cardPackagesDb.findUserIdByName(player2.Username);
 
@@ -125,7 +125,6 @@ namespace MTCG.HTTP
                 scoreboardTradesDb.updateScoreboard(userId2, player2.ELO);
 
                 userDatabase.markBattleAsFinished(userId1,userId2);
-
             }
             catch (Exception ex)
             {

@@ -31,7 +31,7 @@ namespace MTCG.HTTP
 
         }
 
-        public void handleTradingsRequests(HttpRequest request, HttpResponse response)
+        public async Task handleTradingsRequests(HttpRequest request, HttpResponse response)
         {
             if (request.Method == "POST" && request.Path == "/tradings")
             {
@@ -55,6 +55,7 @@ namespace MTCG.HTTP
                 response.statusCode = 400;
                 response.statusMessage = $"HTTP {response.statusCode} Bad request";
             }
+
         }
 
         public void checkTradingDeals(HttpRequest request, HttpResponse response)

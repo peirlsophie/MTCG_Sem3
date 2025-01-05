@@ -172,13 +172,12 @@ namespace MTCG.Database
                             }
                         }
 
-                        // If an opponent is available, update the battle record
                         if (battleId != -1)
                         {
                             string startBattleQuery = @"
-                        UPDATE battles 
-                        SET player2 = @player2, status = 'in_progress' 
-                        WHERE id = @id;";
+                            UPDATE battles 
+                            SET player2 = @player2, status = 'in_progress' 
+                            WHERE id = @id;";
 
                             using (var updateCommand = new NpgsqlCommand(startBattleQuery, connection, transaction))
                             {
@@ -186,11 +185,9 @@ namespace MTCG.Database
                                 updateCommand.Parameters.AddWithValue("id", battleId);
                                 updateCommand.ExecuteNonQuery();
                             }
-                            //Console.WriteLine($"Battle started between {opponent} and {userId}!");
                         }
                         else
                         {
-                            // If no opponent available, create a new battle with the player as player1
                             string insertBattleQuery = "INSERT INTO battles (player1, status) VALUES (@player1, 'waiting');";
                             using (var insertCommand = new NpgsqlCommand(insertBattleQuery, connection, transaction))
                             {
@@ -345,11 +342,13 @@ namespace MTCG.Database
             }
         }
 
-        public void changeUserStats(User player)
+        public async Task changeUserStats(User player)
         {
+            Console.WriteLine($"stats before enter in db???: gamesplayed {player.games_played}, wins:{player.Wins}, losses: {player.Losses}, elo: {player.ELO}");
+
             using (var connection = dbAccess.GetConnection())
             {
-                connection.Open();
+                await connection.OpenAsync();
                 using (var transaction = connection.BeginTransaction())
                 {
                     try
@@ -366,9 +365,9 @@ namespace MTCG.Database
                             command.Parameters.AddWithValue("losses", player.Losses);
                             command.Parameters.AddWithValue("username", player.Username);
 
-                            command.ExecuteReader();
+                            await command.ExecuteNonQueryAsync();
                         }
-                        transaction.Commit();
+                        await transaction.CommitAsync();
                     }
                     catch (Exception ex)
                     {
@@ -389,9 +388,6 @@ namespace MTCG.Database
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
                 {
-                    Console.WriteLine($"before enter in db username is:{username}");
-                    Console.WriteLine($"before enter in db bio is:{bio}");
-                    Console.WriteLine($"before enter in db image is:{image}");
                     try
                     {
                         string updateBioImage = @"UPDATE users 

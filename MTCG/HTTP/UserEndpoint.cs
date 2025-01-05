@@ -31,7 +31,7 @@ namespace MTCG.Backend
 
         }
 
-        public void HandleUserRequest(HttpRequest request, HttpResponse response)
+        public async Task HandleUserRequest(HttpRequest request, HttpResponse response)
         {
             string[] pathSegments = request.Path.Trim('/').Split('/');
             Console.WriteLine($"Path Segments: {string.Join(", ", pathSegments)}");
@@ -58,10 +58,11 @@ namespace MTCG.Backend
                 response.statusCode = 400;
                 response.statusMessage = $"HTTP {response.statusCode} Bad request 2";
             }
+
         }
 
-       
-        public async Task RegisterUser(HttpRequest request, HttpResponse response)
+
+        public void RegisterUser(HttpRequest request, HttpResponse response)
         {
             // extract username and password from request
             var userData = JsonSerializer.Deserialize<User>(request.Content);

@@ -45,7 +45,7 @@ namespace MTCG.Backend
             battlesEndpoint = new BattlesEndpoint(dbAccess);
             userDatabase = new UserDatabase(dbAccess);
             cardPackagesDb = new CardPackagesDatabase(dbAccess);
-            Battle battle = new Battle(dbAccess);
+            //Battle battle = new Battle(dbAccess);
             statsScoreboardDb = new StatsScoreboardEndpoint(dbAccess);
             tradingsEndpoint = new TradingsEndpoint(dbAccess);
 
@@ -74,7 +74,7 @@ namespace MTCG.Backend
             }
         }
 
-        public void HandleEndpoints(TcpClient clientSocket)
+        public async Task HandleEndpoints(TcpClient clientSocket)
         {
             using var reader = new StreamReader(clientSocket.GetStream());
             var request = new HttpRequest(reader);
@@ -87,27 +87,27 @@ namespace MTCG.Backend
             //checking for endpoint path
             if (request.Path == "/users" || request.Path == "/sessions" || (pathSegments[0] == "users" && pathSegments.Length == 2))
             {
-                userEndpoint.HandleUserRequest(request, response);
+               await userEndpoint.HandleUserRequest(request, response);
             }
             else if (request.Path == "/packages" || request.Path == "/transactions/packages")
             {
-                packagesEndpoint.handlePackageRequests(request, response);
+               await packagesEndpoint.handlePackageRequests(request, response);
             }
             else if (request.Path == "/cards" || request.Path == "/deck")
             {
-                cardsDeckEndpoint.handleCardDeckRequests(request, response);
+                await cardsDeckEndpoint.handleCardDeckRequests(request, response);
             }
             else if(request.Path == "/battles")
             {
-                battlesEndpoint.handleBattlesRequests(request, response);
+                await battlesEndpoint.handleBattlesRequests(request, response);
             }
             else if (request.Path == "/stats" || request.Path == "/scoreboard")
             {
-                statsScoreboardDb.handleStatsScoreboardRequests(request, response);
+                await statsScoreboardDb.handleStatsScoreboardRequests(request, response);
             }
             else if(request.Path == "/tradings")
             {
-                tradingsEndpoint.handleTradingsRequests(request, response);
+                await tradingsEndpoint.handleTradingsRequests(request, response);
             }
             else
             {
@@ -119,6 +119,7 @@ namespace MTCG.Backend
             }
 
             response.SendResponse();
+
         }
     }
 }

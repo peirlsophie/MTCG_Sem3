@@ -26,7 +26,7 @@ namespace MTCG.HTTP
             this.dbAccess = dbAccess ?? throw new ArgumentNullException(nameof(dbAccess));
         }
 
-        public void handleCardDeckRequests(HttpRequest request, HttpResponse response)
+        public async Task handleCardDeckRequests(HttpRequest request, HttpResponse response)
         {
             if (request.Method == "GET" && request.Path == "/cards")
             {
@@ -49,6 +49,7 @@ namespace MTCG.HTTP
                 response.statusCode = 400;
                 response.statusMessage = $"HTTP {response.statusCode} Bad request";
             }
+
         }
 
         public string extractUsernameFromToken(HttpRequest request)
@@ -97,13 +98,13 @@ namespace MTCG.HTTP
                 if (cardIds.Count == 0)
                 {
                     response.statusCode = 200;
-                    Console.WriteLine($"Cards found for user {username}: ");
+                    response.statusMessage= $"HTTP {response.statusCode} Cards found for user {username}:[]";
                     return;
                 }
                 var cardNames = cardPackagesDb.getCardNames(cardIds);
                 string cardList = string.Join(", ", cardNames);
                 response.statusCode = 200;
-                response.statusMessage = $"HTTP {response.statusCode} Cards found for user {username}: [{cardList}]";
+                response.statusMessage = $"HTTP {response.statusCode} Cards found for user {username}:[{cardList}]";
   
             }
             catch (Exception ex)
@@ -127,16 +128,13 @@ namespace MTCG.HTTP
                 }
 
                 var cardIds = cardPackagesDb.findOwnedCardIdsInDecks(username);
-                Console.WriteLine("problem mit finding cardIds?");
-
                 if (cardIds.Count == 0)
                 {
                     response.statusCode = 200;
-                    Console.WriteLine($"Deck for user {username}: ");
+                    response.statusMessage = $"HTTP {response.statusCode} Deck for user {username}:[]";
                     return;
                 }
                 var cardNames = cardPackagesDb.getCardNames(cardIds);
-                Console.WriteLine("problem mit finding cardNames?");
 
                 string cardList = string.Join(", ", cardNames);
                 response.statusCode = 200;
@@ -157,6 +155,7 @@ namespace MTCG.HTTP
             try
             {
                 string username = extractUsernameFromToken(request);
+                int userId = cardPackagesDb.findUserIdByName(username);
                 if (username == null)
                 {
                     response.statusCode = 401;
@@ -188,10 +187,11 @@ namespace MTCG.HTTP
                         showDeck(request, response);
                         
                     }
-                    else if(cardPackagesDb.saveDeckConfig(cardIds, username))
+                    else if(cardPackagesDb.saveDeckConfig(cardIds, userId))
                     {
                         response.statusCode = 200;
                         response.statusMessage = $"HTTP {response.statusCode} deck configured for {username}.";
+                        cardPackagesDb.markCardAsInDeck(cardIds);
                     }
                     else
                     {

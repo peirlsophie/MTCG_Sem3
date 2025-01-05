@@ -42,11 +42,6 @@ namespace MTCG.Database
                                 int elo = reader.GetInt32(1);
                                 scoreboardData[userId] = elo;
                             }
-                            Console.WriteLine("CHECK RIGHT Scoreboard Data:");
-                            foreach (var kvp in scoreboardData)
-                            {
-                                Console.WriteLine($"User ID: {kvp.Key}, ELO: {kvp.Value}");
-                            }
                             return scoreboardData;
 
                         }

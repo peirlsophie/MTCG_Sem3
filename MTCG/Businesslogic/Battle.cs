@@ -1,5 +1,6 @@
 ﻿using Microsoft.IdentityModel.Protocols;
 using MTCG.Database;
+using MTCG.NewFolder;
 using MTCG_Peirl.Models;
 using System;
 using System.Collections.Generic;
@@ -34,15 +35,15 @@ namespace MTCG.Businesslogic
             
         }
 
-        public User playBattleRound(User user1, User user2)
+        public User playBattleRound(User user1, User user2, HttpResponse response)
         {
 
-            List<Card> cards = choosePlayingCards(user1.Username, user2.Username);
+            List<Card> cards = choosePlayingCards(user1.Username, user2.Username, response);
 
             Card card1 = cards[0];
             Card card2 = cards[1];
 
-            Card winnercard = FightingLogic(card1, card2);
+            Card winnercard = FightingLogic(card1, card2, response);
 
             if(winnercard == null)
             {
@@ -53,13 +54,13 @@ namespace MTCG.Businesslogic
                 if(winnercard.Id == card1.Id)
                 {
                     addLoserCardToWinnerDeck(card2, user1);
-                    removeLoserCardFromLoserDeck(card2, user2);
+                    removeLoserCardFromLoserDeck(card2, user2, response);
                     return user1;
                 }
                 else
                 {
                     addLoserCardToWinnerDeck(card1, user2);
-                    removeLoserCardFromLoserDeck(card1, user1);
+                    removeLoserCardFromLoserDeck(card1, user1, response);
                     return user2;
                 }
 
@@ -69,7 +70,7 @@ namespace MTCG.Businesslogic
 
         
 
-        public List<Card> choosePlayingCards(string username1, string username2)
+        public List<Card> choosePlayingCards(string username1, string username2, HttpResponse response)
         {
             Random rnd = new Random();
             int randomNumberPlayer1 = rnd.Next(4);
@@ -90,12 +91,12 @@ namespace MTCG.Businesslogic
             List<Card> cards = new List<Card> { card1, card2 };
 
 
-            Console.WriteLine($"The chosen card for player1 is: {card1.Name}. The chosen card for player2 is {card2.Name}.");
-
+            response.statusMessage = $"The chosen card for player1 is: {card1.Name}. The chosen card for player2 is {card2.Name}.";
+            response.SendResponse();
             return cards;
         }
 
-        public List<User> createPlayerObjects(string username1, string username2)
+        public List<User> createPlayerObjects(string username1, string username2, HttpResponse response)
         {
             
             int userId1 = cardPackagesDb.findUserIdByName(username1);
@@ -106,7 +107,9 @@ namespace MTCG.Businesslogic
             User player2 = userDatabase.getUserObjectById(userId2);
             addDeckCardsToUserDeck(player2);
 
-            Console.WriteLine($"Player1 is: {player1.Username}, Player2 is: {player2.Username}");
+            response.statusMessage = $"Player1 is: {player1.Username}, Player2 is: {player2.Username}";
+            response.SendResponse();
+
             List<User> users = new List<User> { player1, player2 };
 
             return users;
@@ -118,7 +121,7 @@ namespace MTCG.Businesslogic
         {
             winner.ownedCards.Push(card);
         }
-        public void removeLoserCardFromLoserDeck(Card card, User loser)
+        public void removeLoserCardFromLoserDeck(Card card, User loser, HttpResponse response)
         {
             Stack<Card> tempStack = new Stack<Card>();
 
@@ -132,7 +135,9 @@ namespace MTCG.Businesslogic
                 }
                 else
                 {
-                    Console.WriteLine($"Card {card.Name} has been removed from {loser.Username}'s deck.");
+                    response.statusMessage = $"Card {card.Name} has been removed from {loser.Username}'s deck.";
+                    response.SendResponse();
+
                     break;
                 }
             }
@@ -156,22 +161,20 @@ namespace MTCG.Businesslogic
 
         }
 
-        public Card FightingLogic(Card card1, Card card2)
+        public Card FightingLogic(Card card1, Card card2, HttpResponse response)
         {
-            Console.WriteLine($"Card {card1.Name} has a damage value of {card1.Damage}.");
-            Console.WriteLine($"Card {card2.Name} has a damage value of {card2.Damage}.");
+            response.statusMessage = $"Card {card1.Name} has a damage value of {card1.Damage}.";
+            response.statusMessage = $"Card {card2.Name} has a damage value of {card2.Damage}.";
 
-            Console.WriteLine($"Card {card1.Name} is of the element {card1.ElementType}.");
-            Console.WriteLine($"Card {card2.Name} is of the element {card2.ElementType}.");
+            response.statusMessage = $"Card {card1.Name} is of the element {card1.ElementType}.";
+            response.statusMessage = $"Card {card2.Name} is of the element {card2.ElementType}.";
 
-            bool player1Wins = checkSpecialMonsterEffects(card1, card2);
-            bool player2Wins = checkSpecialMonsterEffects(card2, card1);
+            bool player1Wins = checkSpecialMonsterEffects(card1, card2, response);
+            bool player2Wins = checkSpecialMonsterEffects(card2, card1, response);
 
-            Console.WriteLine($"Card {card1.Name} is of type {card1.CardType}.");
-            Console.WriteLine($"Card {card2.Name} is of type {card2.CardType}.");
-
-           
-
+            response.statusMessage = $"Card {card1.Name} is of type {card1.CardType}.";
+            response.statusMessage = $"Card {card2.Name} is of type {card2.CardType}.";
+            
             Card winnercard = null;
                       
             //determine winnercard depending on instant wins
@@ -192,41 +195,53 @@ namespace MTCG.Businesslogic
             var card1DamageTemp = card1.Damage;
             var card2DamageTemp = card2.Damage;
 
-            //Anpassung damage Wert je nach bool ob doubled/halfed
+            //temporarily alter damage value depending if doubled/halfed
 
             if (doubleDamage_halfedDamage1 == (true, false))
             {
                 card1DamageTemp *= 2;
+                response.statusMessage = $"{card1.Name}s {card1.ElementType}-attack was very effective! {card1.Name} doubled its damage power!";
             }
             else if (doubleDamage_halfedDamage1 == (false, true))
             {
                 card1DamageTemp /= 2;
+                response.statusMessage = $"{card1.Name}s {card1.ElementType}-attack was not effective! {card1.Name} damage power was halfed!";
             }
             else if (doubleDamage_halfedDamage2 == (true, false))
             {
                 card2DamageTemp *= 2;
+                response.statusMessage = $"{card2.Name}s {card2.ElementType}-attack was very effective! {card2.Name} doubled its damage power!";
             }
             else if (doubleDamage_halfedDamage2 == (false, true))
             {
                 card2DamageTemp /= 2;
+                response.statusMessage = $"{card2.Name}s {card2.ElementType}-attack was not effective! {card2.Name} damage power was halfed!";
             }
+            response.SendResponse();
 
-            return determineWinnerCard(card1, card2, card1DamageTemp, card2DamageTemp); 
+
+            return determineWinnerCard(card1, card2, card1DamageTemp, card2DamageTemp, response); 
             
         }
 
-        public Card determineWinnerCard(Card card1, Card card2, double damage1, double damage2)
+        public Card determineWinnerCard(Card card1, Card card2, double damage1, double damage2, HttpResponse response)
         {
             if(damage1 > damage2)
             {
+                response.statusMessage = $"{card1.Name} has won with {damage1} against {damage2}!";
+                response.SendResponse();
                 return card1;
             }
             else if(damage1 < damage2)
             {
+                response.statusMessage = $"{card2.Name} has won with {damage2} against {damage1}!";
+                response.SendResponse();
                 return card2;
             }
             else
             {
+                response.statusMessage = $"The cards damage are equal with {damage1} against {damage2}!";
+                response.SendResponse();
                 return null;
             }
         }
@@ -244,7 +259,7 @@ namespace MTCG.Businesslogic
         }
 
 
-        public bool checkSpecialMonsterEffects(Card card1, Card card2)
+        public bool checkSpecialMonsterEffects(Card card1, Card card2, HttpResponse response)
         {
             bool instantWinCard = false;
             Random rnd = new Random();
@@ -253,17 +268,21 @@ namespace MTCG.Businesslogic
             if (card1.CardType == "Dragon" && card2.CardType == "Goblin")
             {
                 instantWinCard = true;
+                response.statusMessage = $"The Goblin is too afraid to attack the Dragon!";
             }
             else if(card1.CardType == "Wizard" && card2.CardType == "Ork")
             {
                 instantWinCard = true;
+                response.statusMessage = $"The Wizard uses his powers to control the Ork!";
             }
             else if(card1.CardType == "Spell" && card1.ElementType == ElementType.water && card2.CardType == "Knight")
             {
+                response.statusMessage = $"The Knights armor is too heavy! The WaterSpell has drowned the Knight.";
                 instantWinCard = true;
             }
             else if (card1.CardType == "Kraken" && card2.CardType == "Spell")
             {
+                response.statusMessage = $"The Kraken is immune against the Spell!";
                 instantWinCard = true;
             }
             else if(card1.CardType == "Elf" && card1.ElementType == ElementType.fire && card2.CardType == "Dragon")
@@ -271,13 +290,16 @@ namespace MTCG.Businesslogic
                 int chanceThatDragonMisses = rnd.Next(2);
                 if(chanceThatDragonMisses == 1)
                 {
+                    response.statusMessage = $"The FireElf could evade the Dragons attack!";
                     instantWinCard = true;
                 }
                 else
-                { 
+                {
+                    response.statusMessage = $"The FireElf could not evade the Dragons attack!";
                     instantWinCard = false;
                 }
             }
+            response.SendResponse();
 
             return instantWinCard;
 

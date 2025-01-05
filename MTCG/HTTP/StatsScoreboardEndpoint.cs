@@ -22,7 +22,7 @@ namespace MTCG.HTTP
             this.dbAccess = dbAccess ?? throw new ArgumentNullException(nameof(dbAccess));
         }
 
-        public void handleStatsScoreboardRequests(HttpRequest request, HttpResponse response)
+        public async Task handleStatsScoreboardRequests(HttpRequest request, HttpResponse response)
         {
             if (request.Method == "GET" && request.Path == "/stats")
             {
@@ -40,6 +40,7 @@ namespace MTCG.HTTP
                 response.statusCode = 400;
                 response.statusMessage = $"HTTP {response.statusCode} Bad request";
             }
+
         }
 
         public void showUserStats(HttpRequest request, HttpResponse response)

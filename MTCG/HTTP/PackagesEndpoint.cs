@@ -26,7 +26,7 @@ namespace MTCG.HTTP
             this.dbAccess = dbAccess ?? throw new ArgumentNullException(nameof(dbAccess));
         }
 
-        public void handlePackageRequests(HttpRequest request, HttpResponse response)
+        public async Task handlePackageRequests(HttpRequest request, HttpResponse response)
         {
             if (request.Method == "POST" && request.Path == "/packages")
             {
@@ -42,6 +42,7 @@ namespace MTCG.HTTP
                 response.statusCode = 400;
                 response.statusMessage = $"HTTP {response.statusCode} Bad request";
             }
+
         }
 
         public void createPackages(HttpRequest request, HttpResponse response)
