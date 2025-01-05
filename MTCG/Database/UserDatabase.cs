@@ -211,6 +211,37 @@ namespace MTCG.Database
             }
         }
 
+        public void markBattleAsFinished(int id1, int id2)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        string updateCoins = @"UPDATE battles
+                                               SET status = @status WHERE player1 = @player1 AND player2 = @player2;";
+
+                        using (var command = new NpgsqlCommand(updateCoins, connection))
+                        {
+                            command.Parameters.AddWithValue("status", "completed");
+                            command.Parameters.AddWithValue("player1", id1);
+                            command.Parameters.AddWithValue("player2", id2);
+
+                            command.ExecuteNonQuery();
+                        }
+                        transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        Console.WriteLine($"Error during transaction: {ex.Message}");
+                        throw new Exception("An error occurred while performing the transaction", ex);
+                    }
+                }
+            }
+        }
 
 
 
@@ -335,7 +366,7 @@ namespace MTCG.Database
                             command.Parameters.AddWithValue("losses", player.Losses);
                             command.Parameters.AddWithValue("username", player.Username);
 
-                            command.ExecuteNonQuery();
+                            command.ExecuteReader();
                         }
                         transaction.Commit();
                     }

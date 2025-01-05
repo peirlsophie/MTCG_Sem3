@@ -116,17 +116,15 @@ namespace MTCG.HTTP
 
                 }
 
-                Console.WriteLine($"kommst hierher beide usernames:{player1.Wins}, {player1.Losses},{player2.Wins}, {player2.Losses}");
-                userDatabase.changeUserStats(player1);
-                userDatabase.changeUserStats(player2);
+                 userDatabase.changeUserStats(player1);
+                 userDatabase.changeUserStats(player2);
                 var userId1 = cardPackagesDb.findUserIdByName(player1.Username);
                 var userId2 = cardPackagesDb.findUserIdByName(player2.Username);
-                Console.WriteLine($"kommst hierher beide userids:{userId1}, {userId2}, {player1.ELO}, {player2.ELO}");
 
                 scoreboardTradesDb.updateScoreboard(userId1, player1.ELO);
                 scoreboardTradesDb.updateScoreboard(userId2, player2.ELO);
-                Console.WriteLine($"db insert funktioniert?");
 
+                userDatabase.markBattleAsFinished(userId1,userId2);
 
             }
             catch (Exception ex)

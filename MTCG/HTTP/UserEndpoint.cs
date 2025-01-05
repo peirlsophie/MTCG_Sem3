@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -60,7 +61,7 @@ namespace MTCG.Backend
         }
 
        
-        public void RegisterUser(HttpRequest request, HttpResponse response)
+        public async Task RegisterUser(HttpRequest request, HttpResponse response)
         {
             // extract username and password from request
             var userData = JsonSerializer.Deserialize<User>(request.Content);
@@ -108,7 +109,7 @@ namespace MTCG.Backend
         }
 
 
-        private string LoginUser(HttpRequest request, HttpResponse response)
+        public string LoginUser(HttpRequest request, HttpResponse response)
         {
             var userData = JsonSerializer.Deserialize<User>(request.Content);
 

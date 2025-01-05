@@ -85,7 +85,8 @@ namespace MTCG.Database
                 string query = "SELECT COUNT(*) FROM packages WHERE is_purchased = false;";
                 using (var command = new NpgsqlCommand(query, connection))
                 {
-                    return Convert.ToInt32(command.ExecuteScalar());
+                    var result = command.ExecuteScalar();
+                    return Convert.ToInt32(result);
                 }
             }
         }
@@ -96,49 +97,63 @@ namespace MTCG.Database
             {
                 connection.Open();
 
-                // Find id of an available package
-                string selectQuery = "SELECT id FROM packages WHERE is_purchased = false LIMIT 1;";
-
-                using (var selectCommand = new NpgsqlCommand(selectQuery, connection))
+                using (var transaction = connection.BeginTransaction())
                 {
-                    var packageIdObj = selectCommand.ExecuteScalar();
-                    if (packageIdObj != null)
+                    try
                     {
-                        int packageId = Convert.ToInt32(packageIdObj);
 
-                        // Mark the package as purchased
-                        string updateQuery = "UPDATE packages SET is_purchased = true WHERE id = @id;";
-                        using (var updateCommand = new NpgsqlCommand(updateQuery, connection))
+                        string selectQuery = @"
+                    SELECT id FROM packages 
+                    WHERE is_purchased = false 
+                    LIMIT 1 
+                    FOR UPDATE SKIP LOCKED;";
+
+                        int packageId;
+                        using (var selectCommand = new NpgsqlCommand(selectQuery, connection, transaction))
                         {
+                            var packageIdObj = selectCommand.ExecuteScalar();
+                            if (packageIdObj == null)
+                            {
+                                Console.WriteLine("No available packages found.");
+                                transaction.Rollback();
+                                return;
+                            }
+                            packageId = Convert.ToInt32(packageIdObj);
+                        }
+
+
+                        int userId = findUserIdByName(username);
+
+
+                        string updateQuery = @"
+                    UPDATE packages 
+                    SET is_purchased = true, buyer_id = @buyer_id 
+                    WHERE id = @id;";
+
+                        using (var updateCommand = new NpgsqlCommand(updateQuery, connection, transaction))
+                        {
+                            updateCommand.Parameters.AddWithValue("buyer_id", userId);
                             updateCommand.Parameters.AddWithValue("id", packageId);
                             updateCommand.ExecuteNonQuery();
                         }
 
-                        // Get user ID based on username
-                        int userId = findUserIdByName(username);
-
-                        // Assign the buyer to the package
-                        string assignBuyerQuery = "UPDATE packages SET buyer_id = @buyer_id WHERE id = @id;";
-                        using (var assignBuyerCommand = new NpgsqlCommand(assignBuyerQuery, connection))
-                        {
-                            assignBuyerCommand.Parameters.AddWithValue("buyer_id", userId);
-                            assignBuyerCommand.Parameters.AddWithValue("id", packageId);
-                            assignBuyerCommand.ExecuteNonQuery();
-                        }
-
-                        // Retrieve package cards and save them to the stack
                         var packageData = GetCardsFromPackage(packageId, connection);
                         saveCardsToStack(packageData, userId);
 
-                        Console.WriteLine($"Package {packageId} purchased by user {username}.");
+
+                       transaction.Commit();
+                        Console.WriteLine($"Package {packageId} successfully purchased by user {username}.");
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Console.WriteLine("No available packages found.");
+                        transaction.Rollback();
+                        Console.WriteLine($"Transaction failed: {ex.Message}");
+                        throw;
                     }
                 }
             }
         }
+
 
         private List<Card> GetCardsFromPackage(int packageId, NpgsqlConnection connection)
         {
@@ -281,9 +296,9 @@ namespace MTCG.Database
 
                 // Use IN clause to fetch card names for the given card IDs
                 string getCardNamesQuery = @"
-            SELECT name 
-            FROM cards 
-            WHERE id = ANY(@cardIds);";
+                    SELECT name 
+                    FROM cards 
+                    WHERE id = ANY(@cardIds);";
 
                 var cardNames = new List<string>();
 
@@ -376,7 +391,7 @@ namespace MTCG.Database
                             }
                         }
 
-                        transaction.Commit();
+                         transaction.Commit();
 
                     }
                     catch (Exception ex)

@@ -51,32 +51,41 @@ namespace MTCG.HTTP
             }
         }
 
-        public string extractUsernameFromToken(HttpRequest request, HttpResponse response)
+        public string extractUsernameFromToken(HttpRequest request)
         {
-            var authHeader = request.Headers["Authorization"];
-            if (string.IsNullOrEmpty(authHeader))
+            try
             {
-                response.statusCode = 401;
-                response.statusMessage = $"HTTP {response.statusCode} Unauthorized";
+                var authHeader = request.Headers["Authorization"];
+                if (string.IsNullOrEmpty(authHeader))
+                {
+                    throw new ArgumentException("Authorization header is missing");
+                }
+
+                var token = authHeader.Split(" ")[1];
+                int index = token.IndexOf("-mtcg");
+                Console.WriteLine("index: " + index);
+                if (index == -1)
+                {
+                    throw new ArgumentException("Invalid token format");
+                }
+                string username = token.Substring(0, index);
+
+                return username;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception: " + ex.Message);
                 return "";
             }
-            var token = authHeader.Split(" ")[1];
-            int index = token.IndexOf("-mtcg");
-            if (index == -1)
-            {
-                return null;
-            }
-            string username = token.Substring(0, index);
-
-            return username;
-
         }
+
 
         public void showStack(HttpRequest request, HttpResponse response)
         {
             try
             {
-                string username = extractUsernameFromToken(request, response);
+                string username = extractUsernameFromToken(request);
+
                 if (username == null)
                 {
                     response.statusCode = 401;
@@ -108,7 +117,8 @@ namespace MTCG.HTTP
         {
             try
             {
-                string username = extractUsernameFromToken(request, response);
+                string username = extractUsernameFromToken(request);
+                Console.WriteLine("problem mit extraction?");
                 if (username == null)
                 {
                     response.statusCode = 401;
@@ -117,6 +127,8 @@ namespace MTCG.HTTP
                 }
 
                 var cardIds = cardPackagesDb.findOwnedCardIdsInDecks(username);
+                Console.WriteLine("problem mit finding cardIds?");
+
                 if (cardIds.Count == 0)
                 {
                     response.statusCode = 200;
@@ -124,6 +136,8 @@ namespace MTCG.HTTP
                     return;
                 }
                 var cardNames = cardPackagesDb.getCardNames(cardIds);
+                Console.WriteLine("problem mit finding cardNames?");
+
                 string cardList = string.Join(", ", cardNames);
                 response.statusCode = 200;
                 response.statusMessage = $"HTTP {response.statusCode} Deck for user {username}:[{cardList}]";
@@ -142,7 +156,7 @@ namespace MTCG.HTTP
         {
             try
             {
-                string username = extractUsernameFromToken(request, response);
+                string username = extractUsernameFromToken(request);
                 if (username == null)
                 {
                     response.statusCode = 401;

@@ -12,7 +12,6 @@ namespace MTCG.NewFolder
         public StreamWriter writer;
         public int statusCode;
         public string statusMessage;
-        public string body;
         public HttpResponse(StreamWriter writer) 
         {
             this.writer = writer;   
@@ -20,22 +19,24 @@ namespace MTCG.NewFolder
 
         public void SendResponse()
         {
-            Console.WriteLine("----------------------------------------");
 
-            // ----- 3. Write the HTTP-Response -----
-            var writerAlsoToConsole = new StreamTracer(writer);
-            writer.WriteLine($"HTTP/1.1 {statusCode} {statusMessage}");
-            writer.WriteLine("Content-Type: application/json");
-            writer.WriteLine(); // End of headers
+            if(writer.BaseStream.CanWrite == true)
+            {
+                Console.WriteLine("----------------------------------------");
 
-            if (!string.IsNullOrEmpty(body))
-            {
-                writer.WriteLine("{\"message\": \"" + statusMessage + "\", \"body\": \"" + body.Replace("\n", "\\n").Replace("\"", "\\\"") + "\"}");
-            }
-            else
-            {
+                // ----- 3. Write the HTTP-Response -----
+                var writerAlsoToConsole = new StreamTracer(writer);
+                writer.WriteLine($"HTTP/1.1 {statusCode} {statusMessage}");
+                writer.WriteLine("Content-Type: application/json");
+                writer.WriteLine();
                 writer.WriteLine("{\"message\": \"" + statusMessage + "\"}");
+                writer.Flush();
+
+
             }
+
+           
+
         }
 
 
