@@ -57,7 +57,7 @@ namespace MTCG.HTTP
 
                 battle.startBattle(username);
                 response.statusCode = 200;
-                response.statusMessage = $"HTTP {response.statusCode} Battle started successfully.";
+                response.statusMessage = $"HTTP {response.statusCode} \nBattle started successfully.";
 
                 List<string> players = userDatabase.showPlayersInBattle();
                
@@ -82,12 +82,12 @@ namespace MTCG.HTTP
                     if (winner == player1)
                     {
                         player1WinCount++;
-                        response.statusMessage = $"{player1.Username} wins round {roundCounter}";
+                        response.statusMessage = $"\n{player1.Username} wins round {roundCounter}";
                     }
                     else if (winner == player2)
                     {
                         player2WinCount++;
-                        response.statusMessage= $"{player2.Username} wins round {roundCounter}";
+                        response.statusMessage= $"\n{player2.Username} wins round {roundCounter}";
                     }
                     else
                     {
@@ -99,14 +99,14 @@ namespace MTCG.HTTP
                 if (player1WinCount > player2WinCount)
                 {
                     response.statusCode = 200;
-                    response.statusMessage = $"HTTP {response.statusCode} {player1.Username} wins the battle with {player1WinCount} rounds won!";
+                    response.statusMessage = $"HTTP {response.statusCode} \n{player1.Username} wins the battle with {player1WinCount} rounds won!";
                     eloCalcUsers(player1, player2);
 
                 }
                 else if (player2WinCount > player1WinCount)
                 {
                     response.statusCode = 200;
-                    response.statusMessage = $"HTTP {response.statusCode} {player2.Username} wins the battle with {player2WinCount} rounds won!";
+                    response.statusMessage = $"HTTP {response.statusCode} \n{player2.Username} wins the battle with {player2WinCount} rounds won!";
                     eloCalcUsers(player2, player1);
                 }
                 else

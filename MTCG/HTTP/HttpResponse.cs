@@ -23,7 +23,6 @@ namespace MTCG.NewFolder
             {
                 var writerAlsoToConsole = new StreamTracer(writer);
                 writer.WriteLine($"HTTP/1.1 {statusCode} {statusMessage}");
-                writer.WriteLine("Content-Type: text/plain");
                 writer.WriteLine();
                 writer.Flush();
             }

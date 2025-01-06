@@ -248,7 +248,6 @@ namespace MTCG.Database
                         }
                     }
                 }
-
                 return cardIds;
             }
         }
@@ -451,8 +450,64 @@ namespace MTCG.Database
                     }
                 }
             }
-
         }
+
+        public async Task saveTradedCardInStack(int userId, string cardId)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                await connection.OpenAsync();
+                using (var transaction = await connection.BeginTransactionAsync())
+                {
+                    try
+                    {
+                        string addCardInStack = "INSERT INTO stacks (user_id, card_id) VALUES (@user_id, @card_id);";
+                            using (var command = new NpgsqlCommand(addCardInStack, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("user_id", userId);
+                                command.Parameters.AddWithValue("card_id", cardId);
+
+                                await command.ExecuteNonQueryAsync();
+                            }
+                        await transaction.CommitAsync();
+                    }
+                    catch(Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        Console.WriteLine($"Error while saving card to stack: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        public async Task deleteTradedCardFromStack(int userId, string cardId)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                await connection.OpenAsync();
+                using (var transaction = await connection.BeginTransactionAsync())
+                {
+                    try
+                    {
+                        string deleteCardFromStack = "DELETE FROM stacks WHERE user_id = @user_id AND card_id = @card_id);";
+                        using (var command = new NpgsqlCommand(deleteCardFromStack, connection, transaction))
+                        {
+                            command.Parameters.AddWithValue("user_id", userId);
+                            command.Parameters.AddWithValue("card_id", cardId);
+
+                            await command.ExecuteNonQueryAsync();
+                        }
+                        await transaction.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        Console.WriteLine($"Error while deleting card from stack: {ex.Message}");
+                    }
+                }
+            }
+        }
+
     }
 
 }

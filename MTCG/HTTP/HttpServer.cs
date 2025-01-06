@@ -105,7 +105,7 @@ namespace MTCG.Backend
             {
                 await statsScoreboardDb.handleStatsScoreboardRequests(request, response);
             }
-            else if(request.Path == "/tradings")
+            else if(request.Path == "/tradings" || (pathSegments[0] == "tradings" && pathSegments.Length == 2))
             {
                 await tradingsEndpoint.handleTradingsRequests(request, response);
             }

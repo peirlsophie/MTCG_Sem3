@@ -96,16 +96,16 @@ namespace MTCG.Database
                 {
                     try
                     {
-                        string insertTradingDeal = @"INSERT INTO trades (Id, user_id, card_id, requirement_type, min_damage)
-                                                    VALUES (@Id, @user_id, @card_id, @requirement_type, @min_damage);";
+                        string insertTradingDeal = @"INSERT INTO trades (Id, user_id, card_id, Type, MinimumDamage)
+                                                    VALUES (@Id, @user_id, @card_id, @Type, @MinimumDamage);";
 
                         using (var command = new NpgsqlCommand(insertTradingDeal, connection))
                         {
                             command.Parameters.AddWithValue("Id", trade.Id);
                             command.Parameters.AddWithValue("user_id", user_id);
                             command.Parameters.AddWithValue("card_id", trade.CardToTrade);
-                            command.Parameters.AddWithValue("requirement_type", trade.Type);
-                            command.Parameters.AddWithValue("min_damage", trade.MinimumDamage);
+                            command.Parameters.AddWithValue("Type", trade.Type);
+                            command.Parameters.AddWithValue("MinimumDamage", trade.MinimumDamage);
                             command.ExecuteNonQuery();
                         }
                         transaction.Commit();
@@ -125,7 +125,7 @@ namespace MTCG.Database
             using (var connection = dbAccess.GetConnection())
             {
                 connection.Open();
-                string query = @"SELECT Id, user_id, card_id, requirement_type, min_damage
+                string query = @"SELECT Id, user_id, card_id, Type, MinimumDamage
                                  FROM trades";
 
                 using (var command = new NpgsqlCommand(query, connection))
@@ -153,7 +153,79 @@ namespace MTCG.Database
                             Console.WriteLine($"Error during transaction: {ex.Message}");
                             throw new Exception("An error occurred while updating scoreboard", ex);
                         }
+                    }
+                }
+            }
+        }
 
+        public bool deleteTrade(string tradeId)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        string deleteTradingDeal = @"DELETE FROM trades
+                                                     WHERE Id = @Id;";
+
+                        using (var command = new NpgsqlCommand(deleteTradingDeal, connection))
+                        {
+                            command.Parameters.AddWithValue("Id", tradeId);
+                            command.ExecuteNonQuery();
+                        }
+                        transaction.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+
+                        transaction.Rollback();
+                        Console.WriteLine($"Error during transaction: {ex.Message}");
+                        return false;
+                        throw new Exception("An error occurred while deleting the Trade Deal:", ex);
+                        
+                    }
+                }
+            }
+        }
+
+        public (int userId, string cardId) getOfferingUserIdAndCardID(string tradeId)
+        {
+            using (var connection = dbAccess.GetConnection())
+            {
+                connection.Open();
+                string query = @"SELECT user_id, card_id
+                                 FROM trades
+                                 WHERE id = @id";
+
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@id", tradeId);
+                    
+                    using (var reader = command.ExecuteReader())
+                    {
+                        try
+                        {
+                            if (reader.Read())
+                            {
+                               
+                                int userId = reader.GetInt32(reader.GetOrdinal("user_id"));
+                                string cardId = reader.GetString(reader.GetOrdinal("card_id"));
+
+                                return (userId, cardId);
+                            }
+                            else
+                            {
+                                throw new Exception("No user found for this card_id");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error during transaction: {ex.Message}");
+                            throw new Exception("An error occurred while getting the user ID and card ID", ex);
+                        }
                     }
                 }
             }

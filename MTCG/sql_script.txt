@@ -64,6 +64,6 @@ CREATE TABLE IF NOT EXISTS trades (
     Id VARCHAR(255) PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     card_id VARCHAR(255) REFERENCES cards(id) ON DELETE CASCADE,
-    requirement_type VARCHAR(50) NOT NULL,
-    min_damage DECIMAL NOT NULL
+    Type VARCHAR(50) NOT NULL,
+    MinimumDamage DECIMAL NOT NULL
 );

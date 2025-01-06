@@ -14,7 +14,7 @@ using Npgsql;
 
 namespace MTCG.Backend
 {
-    internal class UserEndpoint
+    public class UserEndpoint
     {
         private static int tokenCounter = 0;
         private readonly UserDatabase userDatabase;
@@ -34,7 +34,6 @@ namespace MTCG.Backend
         public async Task HandleUserRequest(HttpRequest request, HttpResponse response)
         {
             string[] pathSegments = request.Path.Trim('/').Split('/');
-            Console.WriteLine($"Path Segments: {string.Join(", ", pathSegments)}");
 
             if (request.Method == "POST" && request.Path == "/users")
             {
@@ -100,7 +99,7 @@ namespace MTCG.Backend
                 }
             }
         }
-        private string HashPassword(string password)
+        public string HashPassword(string password)
         {
             using (SHA256 sha256 = SHA256.Create())
             {

@@ -10,7 +10,7 @@ using System.Numerics;
 
 namespace MTCG.Database
 {
-    internal class UserDatabase
+    public class UserDatabase
     {
         private readonly DatabaseAccess dbAccess;
         public UserDatabase(DatabaseAccess dbAccess)
@@ -344,8 +344,6 @@ namespace MTCG.Database
 
         public async Task changeUserStats(User player)
         {
-            Console.WriteLine($"stats before enter in db???: gamesplayed {player.games_played}, wins:{player.Wins}, losses: {player.Losses}, elo: {player.ELO}");
-
             using (var connection = dbAccess.GetConnection())
             {
                 await connection.OpenAsync();

@@ -16,10 +16,10 @@ namespace MTCG.Businesslogic
        
         public Trade(string Id, string CardToTrade, string Type, int MinimumDamage) 
         {
-            Id = Id;
-            CardToTrade = CardToTrade;
-            Type = Type;
-            MinimumDamage = MinimumDamage;
+            this.Id = Id;
+            this.CardToTrade = CardToTrade;
+            this.Type = Type;
+            this.MinimumDamage = MinimumDamage;
         } 
     } 
 }
