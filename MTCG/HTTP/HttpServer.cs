@@ -17,16 +17,16 @@ namespace MTCG.Backend
     {
         private readonly TcpListener httpServer;
 
-        private readonly DatabaseAccess dbAccess;
+        public readonly DatabaseAccess dbAccess;
 
-        private readonly UserEndpoint userEndpoint; 
-        private readonly PackagesEndpoint packagesEndpoint;
-        private readonly CardsDeckEndpoint cardsDeckEndpoint;
-        private readonly BattlesEndpoint battlesEndpoint;
-        private readonly UserDatabase userDatabase;
-        private readonly CardPackagesDatabase cardPackagesDb;
-        private readonly StatsScoreboardEndpoint statsScoreboardDb;
-        private readonly TradingsEndpoint tradingsEndpoint;
+        public readonly UserEndpoint userEndpoint;
+        public readonly PackagesEndpoint packagesEndpoint;
+        public readonly CardsDeckEndpoint cardsDeckEndpoint;
+        public readonly BattlesEndpoint battlesEndpoint;
+        public readonly UserDatabase userDatabase;
+        public readonly CardPackagesDatabase cardPackagesDb;
+        public readonly StatsScoreboardEndpoint statsScoreboardDb;
+        public readonly TradingsEndpoint tradingsEndpoint;
 
         public int statusCode;
         public string statusMessage { get; set; }
@@ -76,50 +76,65 @@ namespace MTCG.Backend
 
         public async Task HandleEndpoints(TcpClient clientSocket)
         {
-            using var reader = new StreamReader(clientSocket.GetStream());
-            var request = new HttpRequest(reader);
-            request.processRequest();
-            using var writer = new StreamWriter(clientSocket.GetStream()) { AutoFlush = true };
-            var response = new HttpResponse(writer);
-
-            string[] pathSegments = request.Path.Trim('/').Split('/');
-
-            //checking for endpoint path
-            if (request.Path == "/users" || request.Path == "/sessions" || (pathSegments[0] == "users" && pathSegments.Length == 2))
+            if (clientSocket == null || !clientSocket.Connected)
             {
-               await userEndpoint.HandleUserRequest(request, response);
-            }
-            else if (request.Path == "/packages" || request.Path == "/transactions/packages")
-            {
-               await packagesEndpoint.handlePackageRequests(request, response);
-            }
-            else if (request.Path == "/cards" || request.Path == "/deck")
-            {
-                await cardsDeckEndpoint.handleCardDeckRequests(request, response);
-            }
-            else if(request.Path == "/battles")
-            {
-                await battlesEndpoint.handleBattlesRequests(request, response);
-            }
-            else if (request.Path == "/stats" || request.Path == "/scoreboard")
-            {
-                await statsScoreboardDb.handleStatsScoreboardRequests(request, response);
-            }
-            else if(request.Path == "/tradings" || (pathSegments[0] == "tradings" && pathSegments.Length == 2))
-            {
-                await tradingsEndpoint.handleTradingsRequests(request, response);
-            }
-            else
-            {
-                Console.WriteLine($"{request.Method} + {request.Path}");
-                response.statusCode = 404; // Not Found
-                response.statusMessage = "Endpoint not found";
-                response.SendResponse(); 
+                Console.WriteLine("Invalid or disconnected client socket");
                 return;
             }
+            try
+            {
+                using var reader = new StreamReader(clientSocket.GetStream());
+                var request = new HttpRequest(reader);
 
-            response.SendResponse();
+                request.processRequest();
 
+                using var writer = new StreamWriter(clientSocket.GetStream()) { AutoFlush = true };
+                var response = new HttpResponse(writer);
+
+                string[] pathSegments = request.Path.Trim('/').Split('/');
+
+                //checking for endpoint path
+                if (request.Path == "/users" || request.Path == "/sessions" || (pathSegments[0] == "users" && pathSegments.Length == 2))
+                {
+                    await userEndpoint.HandleUserRequest(request, response);
+                }
+                else if (request.Path == "/packages" || request.Path == "/transactions/packages")
+                {
+                    await packagesEndpoint.handlePackageRequests(request, response);
+                }
+                else if (request.Path == "/cards" || request.Path == "/deck")
+                {
+                    await cardsDeckEndpoint.handleCardDeckRequests(request, response);
+                }
+                else if (request.Path == "/battles")
+                {
+                    await battlesEndpoint.handleBattlesRequests(request, response);
+                }
+                else if (request.Path == "/stats" || request.Path == "/scoreboard")
+                {
+                    await statsScoreboardDb.handleStatsScoreboardRequests(request, response);
+                }
+                else if (request.Path == "/tradings" || (pathSegments[0] == "tradings" && pathSegments.Length == 2))
+                {
+                    await tradingsEndpoint.handleTradingsRequests(request, response);
+                }
+                else
+                {
+                    Console.WriteLine($"{request.Method} + {request.Path}");
+                    response.statusCode = 404; // Not Found
+                    response.statusMessage = "Endpoint not found";
+                    response.SendResponse();
+                    return;
+                }
+
+                response.SendResponse();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in HandleEndpoints: {ex.Message}");
+            }
         }
+          
     }
 }

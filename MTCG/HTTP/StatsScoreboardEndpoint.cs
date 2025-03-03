@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MTCG.HTTP
 {
-    internal class StatsScoreboardEndpoint
+    public class StatsScoreboardEndpoint
     {
         private readonly DatabaseAccess dbAccess;
         private readonly UserDatabase userDatabase;

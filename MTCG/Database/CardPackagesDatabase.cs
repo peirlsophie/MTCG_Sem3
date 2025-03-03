@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MTCG.Database
 {
-    internal class CardPackagesDatabase
+    public class CardPackagesDatabase
     {
         private readonly DatabaseAccess dbAccess;
 
@@ -27,55 +27,64 @@ namespace MTCG.Database
 
             using (var connection = dbAccess.GetConnection())
             {
-                connection.Open();
-                using (var transaction = connection.BeginTransaction())
+                try
                 {
-                    try
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
                     {
-                        // Save each card to the database
-                        foreach (var card in packageData)
+                        try
                         {
-                            string insertCardSql = @"
-                            INSERT INTO cards (id, name, damage, element_type, card_type)
-                            VALUES (@id, @name, @damage, @element_type, @card_type);";
-
-                            using (var command = new NpgsqlCommand(insertCardSql, connection))
+                            // Save each card to the database
+                            foreach (var card in packageData)
                             {
-                                command.Parameters.AddWithValue("id", card.Id);
-                                command.Parameters.AddWithValue("name", card.Name);
-                                command.Parameters.AddWithValue("damage", card.Damage);
-                                command.Parameters.AddWithValue("element_type", card.ElementType.ToString());
-                                command.Parameters.AddWithValue("card_type", card.CardType);
+                                string insertCardSql = @"
+                        INSERT INTO cards (id, name, damage, element_type, card_type)
+                        VALUES (@id, @name, @damage, @element_type, @card_type);";
+
+                                using (var command = new NpgsqlCommand(insertCardSql, connection))
+                                {
+                                    command.Parameters.AddWithValue("id", card.Id);
+                                    command.Parameters.AddWithValue("name", card.Name);
+                                    command.Parameters.AddWithValue("damage", card.Damage);
+                                    command.Parameters.AddWithValue("element_type", card.ElementType.ToString());
+                                    command.Parameters.AddWithValue("card_type", card.CardType);
+                                    command.ExecuteNonQuery();
+                                }
+                            }
+
+                            // Insert the package with the provided card IDs
+                            string insertPackageSql = @"
+                    INSERT INTO packages (card1_id, card2_id, card3_id, card4_id, card5_id, is_purchased)
+                    VALUES (@card1_id, @card2_id, @card3_id, @card4_id, @card5_id, false);";
+
+                            using (var command = new NpgsqlCommand(insertPackageSql, connection))
+                            {
+                                command.Parameters.AddWithValue("card1_id", packageData[0].Id);
+                                command.Parameters.AddWithValue("card2_id", packageData[1].Id);
+                                command.Parameters.AddWithValue("card3_id", packageData[2].Id);
+                                command.Parameters.AddWithValue("card4_id", packageData[3].Id);
+                                command.Parameters.AddWithValue("card5_id", packageData[4].Id);
                                 command.ExecuteNonQuery();
                             }
+
+                            transaction.Commit();
                         }
-
-                        // Insert the package with the provided card IDs
-                        string insertPackageSql = @"
-                        INSERT INTO packages (card1_id, card2_id, card3_id, card4_id, card5_id, is_purchased)
-                        VALUES (@card1_id, @card2_id, @card3_id, @card4_id, @card5_id, false);";
-
-                        using (var command = new NpgsqlCommand(insertPackageSql, connection))
+                        catch (Exception ex)
                         {
-                            command.Parameters.AddWithValue("card1_id", packageData[0].Id);
-                            command.Parameters.AddWithValue("card2_id", packageData[1].Id);
-                            command.Parameters.AddWithValue("card3_id", packageData[2].Id);
-                            command.Parameters.AddWithValue("card4_id", packageData[3].Id);
-                            command.Parameters.AddWithValue("card5_id", packageData[4].Id);
-                            command.ExecuteNonQuery();
+                            transaction.Rollback();
+                            Console.WriteLine($"Database transaction failed: {ex.Message}");
+                            throw new Exception("Database error occurred while saving the package.", ex);
                         }
-
-                        transaction.Commit();
                     }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        Console.WriteLine($"Error during transaction: {ex.Message}");
-                        throw;
-                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Database connection failed: {ex.Message}");
+                    throw new Exception("Failed to connect to the database.", ex);
                 }
             }
         }
+
 
         public int countAvailablePackages()
         {

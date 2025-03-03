@@ -86,37 +86,50 @@ namespace MTCG.HTTP
         
         public void purchasePackages(HttpRequest request, HttpResponse response)
         {
-            var username = extractUsernameFromToken(request);
-
-            if (username == null)
+            try
             {
-                response.statusCode = 400;
-                response.statusMessage = $"HTTP {response.statusCode} Invalid input";
-                return;
-            }
-            int availablePackages = cardPackagesDb.countAvailablePackages();
-            var availableCoins = userDatabase.checkAvailableCoins(username);
-
-            if (availablePackages > 0)
-            {
-                if (availableCoins >= 5)
+                if (request == null || response == null)
                 {
-                    userDatabase.decreaseCoins(username);
-                    cardPackagesDb.updatePurchasedPackage(username);
-                    response.statusCode = 201; // Success
-                    response.statusMessage = $"HTTP {response.statusCode} Package purchased successfully.";
+                    Console.WriteLine("Request or Response is null.");
+                    return;
+                }
+                var username = extractUsernameFromToken(request);
+
+                if (username == null)
+                {
+                    response.statusCode = 400;
+                    response.statusMessage = $"HTTP {response.statusCode} Invalid input";
+                    return;
+                }
+                int availablePackages = cardPackagesDb.countAvailablePackages();
+                var availableCoins = userDatabase.checkAvailableCoins(username);
+
+                if (availablePackages > 0)
+                {
+                    if (availableCoins >= 5)
+                    {
+                        userDatabase.decreaseCoins(username);
+                        cardPackagesDb.updatePurchasedPackage(username);
+                        response.statusCode = 201; // Success
+                        response.statusMessage = $"HTTP {response.statusCode} Package purchased successfully.";
+                    }
+                    else
+                    {
+                        response.statusCode = 401;
+                        response.statusMessage = $"HTTP {response.statusCode} Not enough money";
+
+                    }
                 }
                 else
                 {
-                    response.statusCode = 401; 
-                    response.statusMessage = $"HTTP {response.statusCode} Not enough money";
-
+                    response.statusCode = 402; // Bad Request
+                    response.statusMessage = $"HTTP {response.statusCode} No packages available";
                 }
             }
-            else
+            catch(Exception ex)
             {
-                response.statusCode = 402; // Bad Request
-                response.statusMessage = $"HTTP {response.statusCode} No packages available";
+                response.statusCode = 500;
+                response.statusMessage = $"HTTP {response.statusCode} Server error: " + ex.Message;
             }
 
         }

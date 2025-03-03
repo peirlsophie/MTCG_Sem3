@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace MTCG.HTTP
 {
-    internal class BattlesEndpoint
+    public class BattlesEndpoint
     {
         private readonly DatabaseAccess dbAccess;
         private readonly UserDatabase userDatabase;

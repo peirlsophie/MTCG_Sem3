@@ -15,7 +15,7 @@ using Microsoft.Extensions.FileSystemGlobbing.Internal;
 
 namespace MTCG.HTTP
 {
-    internal class TradingsEndpoint
+    public class TradingsEndpoint
     {
         private readonly DatabaseAccess dbAccess;
         private readonly ScoreboardTradesDatabase tradesDatabase;
