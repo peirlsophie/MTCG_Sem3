@@ -69,7 +69,7 @@ namespace MTCG.Backend
             while (true)
             {
                 var clientSocket = httpServer.AcceptTcpClient();
-                HandleEndpoints(clientSocket);
+                _ = Task.Run(() => HandleEndpoints(clientSocket));
                 
             }
         }

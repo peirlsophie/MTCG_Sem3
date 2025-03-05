@@ -498,7 +498,7 @@ namespace MTCG.Database
                 {
                     try
                     {
-                        string deleteCardFromStack = "DELETE FROM stacks WHERE user_id = @user_id AND card_id = @card_id);";
+                        string deleteCardFromStack = "DELETE FROM stacks WHERE user_id = @user_id AND card_id = @card_id;";
                         using (var command = new NpgsqlCommand(deleteCardFromStack, connection, transaction))
                         {
                             command.Parameters.AddWithValue("user_id", userId);
