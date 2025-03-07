@@ -91,9 +91,10 @@ namespace MTCG.Database
             using (var connection = dbAccess.GetConnection())
             {
                 connection.Open();
-                string query = "SELECT COUNT(*) FROM packages WHERE is_purchased = false;";
+                string query = "SELECT COUNT(*) FROM packages WHERE is_purchased = @is_purchased;";
                 using (var command = new NpgsqlCommand(query, connection))
                 {
+                    command.Parameters.AddWithValue("is_purchased", false);
                     var result = command.ExecuteScalar();
                     return Convert.ToInt32(result);
                 }
@@ -113,13 +114,14 @@ namespace MTCG.Database
 
                         string selectQuery = @"
                         SELECT id FROM packages 
-                        WHERE is_purchased = false 
+                        WHERE is_purchased = @is_purchased 
                         LIMIT 1 
                         FOR UPDATE SKIP LOCKED;";
 
                         int packageId;
                         using (var selectCommand = new NpgsqlCommand(selectQuery, connection, transaction))
                         {
+                            selectCommand.Parameters.AddWithValue("is_purchased", false);
                             var packageIdObj = selectCommand.ExecuteScalar();
                             if (packageIdObj == null)
                             {
@@ -136,11 +138,12 @@ namespace MTCG.Database
 
                         string updateQuery = @"
                         UPDATE packages 
-                        SET is_purchased = true, buyer_id = @buyer_id 
+                        SET is_purchased = @is_purchased, buyer_id = @buyer_id 
                         WHERE id = @id;";
 
                         using (var updateCommand = new NpgsqlCommand(updateQuery, connection, transaction))
                         {
+                            updateCommand.Parameters.AddWithValue("is_purchased", true);
                             updateCommand.Parameters.AddWithValue("buyer_id", userId);
                             updateCommand.Parameters.AddWithValue("id", packageId);
                             updateCommand.ExecuteNonQuery();

@@ -17,7 +17,7 @@ namespace MTCG.NewFolder
         public string HttpVersion { get; set; }
         public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
         public string Content { get; set; }
-       
+
 
         public HttpRequest(StreamReader reader)
         {
@@ -34,12 +34,12 @@ namespace MTCG.NewFolder
             {
                 Console.WriteLine(line);
                 // extract method, path, and HTTP version
-                var firstLineParts = line.Split(' ');  
+                var firstLineParts = line.Split(' ');
                 if (firstLineParts.Length == 3)
                 {
-                    Method = firstLineParts[0];       
-                    Path = firstLineParts[1];         
-                    HttpVersion = firstLineParts[2];  
+                    Method = firstLineParts[0];
+                    Path = firstLineParts[1];
+                    HttpVersion = firstLineParts[2];
                 }
                 else
                 {

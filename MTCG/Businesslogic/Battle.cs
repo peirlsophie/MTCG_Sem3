@@ -16,7 +16,7 @@ namespace MTCG.Businesslogic
         private readonly DatabaseAccess dbAccess;
         private readonly UserDatabase userDatabase;
         private readonly CardPackagesDatabase cardPackagesDb;
-
+        private static readonly object battleLock = new object();
         public int round;
 
         public Battle(DatabaseAccess dbAccess) 
@@ -30,9 +30,12 @@ namespace MTCG.Businesslogic
         public void startBattle(string username)
         {
             int userIdFirstPlayer = cardPackagesDb.findUserIdByName(username);
-            
-            userDatabase.enterPlayersInBattle(userIdFirstPlayer);
-            
+
+            lock (battleLock)
+            {
+                userDatabase.enterPlayersInBattle(userIdFirstPlayer);
+               
+            }            
         }
 
         public User playBattleRound(User user1, User user2, HttpResponse response)

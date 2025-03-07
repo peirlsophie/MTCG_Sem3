@@ -38,7 +38,7 @@ namespace MTCG.HTTP
                 //show deck
                 showDeck(request, response);
             }
-            else if(request.Method == "PUT" && request.Path == "/deck")
+            else if (request.Method == "PUT" && request.Path == "/deck")
             {
                 //configure deck
                 configureDeck(request, response);
@@ -118,8 +118,9 @@ namespace MTCG.HTTP
         {
             try
             {
+
                 string username = extractUsernameFromToken(request);
-                Console.WriteLine("problem mit extraction?");
+
                 if (username == null)
                 {
                     response.statusCode = 401;
@@ -137,6 +138,7 @@ namespace MTCG.HTTP
                 var cardNames = cardPackagesDb.getCardNames(cardIds);
 
                 string cardList = string.Join(", ", cardNames);
+                
                 response.statusCode = 200;
                 response.statusMessage = $"HTTP {response.statusCode} Deck for user {username}:[{cardList}]";
 

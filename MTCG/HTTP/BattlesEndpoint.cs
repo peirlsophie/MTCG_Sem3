@@ -18,6 +18,8 @@ namespace MTCG.HTTP
         private readonly CardPackagesDatabase cardPackagesDb;
         private readonly PackagesEndpoint packagesEndpoint;
         private readonly ScoreboardTradesDatabase scoreboardTradesDb;
+        
+
         public BattlesEndpoint(DatabaseAccess dbAccess) 
         {
             this.cardPackagesDb = new CardPackagesDatabase(dbAccess);
@@ -51,16 +53,25 @@ namespace MTCG.HTTP
                 int roundCounter = 0;
                 int player1WinCount = 0;
                 int player2WinCount = 0;
+                int player1StreakCount = 0;
+                int player2StreakCount = 0;
 
                 var username = packagesEndpoint.extractUsernameFromToken(request);
                 Battle battle = new Battle(dbAccess);
 
                 battle.startBattle(username);
+                
                 response.statusCode = 200;
                 response.statusMessage = $"HTTP {response.statusCode} \nBattle started successfully.";
 
                 List<string> players = userDatabase.showPlayersInBattle();
-               
+
+                if (players.Count < 2)
+                {
+                    response.statusCode = 500;
+                    response.statusMessage = "Not enough players to start a battle.";
+                }
+
                 List<User> playerObjects = battle.createPlayerObjects(players[0], players[1], response);
 
 
@@ -82,12 +93,16 @@ namespace MTCG.HTTP
                     if (winner == player1)
                     {
                         player1WinCount++;
+                        player1StreakCount++;
+                        player2StreakCount = 0;
                         response.statusMessage = $"\n{player1.Username} wins round {roundCounter}";
                     }
                     else if (winner == player2)
                     {
                         player2WinCount++;
-                        response.statusMessage= $"\n{player2.Username} wins round {roundCounter}";
+                        player2StreakCount++;
+                        player1StreakCount = 0;
+                        response.statusMessage = $"\n{player2.Username} wins round {roundCounter}";
                     }
                     else
                     {
@@ -95,24 +110,33 @@ namespace MTCG.HTTP
                     }
                 }
 
-
                 if (player1WinCount > player2WinCount)
                 {
                     response.statusCode = 200;
-                    response.statusMessage = $"HTTP {response.statusCode} \n{player1.Username} wins the battle with {player1WinCount} rounds won!";
+                    response.statusMessage = $"HTTP {response.statusCode} \n{player1.Username} wins the battle with {player1WinCount} rounds won and a streak of {player1StreakCount}!";
+                    if(player1StreakCount >= 3)
+                    {
+                        player1.ELO += 10;
+                    }
                     eloCalcUsers(player1, player2);
 
                 }
                 else if (player2WinCount > player1WinCount)
                 {
                     response.statusCode = 200;
-                    response.statusMessage = $"HTTP {response.statusCode} \n{player2.Username} wins the battle with {player2WinCount} rounds won!";
+                    response.statusMessage = $"HTTP {response.statusCode} \n{player2.Username} wins the battle with {player2WinCount} rounds won and a streak of {player2StreakCount}!";
+                    if(player2StreakCount >= 3)
+                    {
+                        player2.ELO += 10;
+                    }
                     eloCalcUsers(player2, player1);
                 }
                 else
                 {
                     response.statusCode = 200;
                     response.statusMessage = $"HTTP {response.statusCode} The battle ended in a draw!";
+                    player1.games_played++;
+                    player2.games_played++;
                 }
 
                 userDatabase.changeUserStats(player1);
@@ -124,7 +148,8 @@ namespace MTCG.HTTP
                 scoreboardTradesDb.updateScoreboard(userId1, player1.ELO);
                 scoreboardTradesDb.updateScoreboard(userId2, player2.ELO);
 
-                userDatabase.markBattleAsFinished(userId1,userId2);
+                userDatabase.markBattleAsFinished(userId1, userId2);
+                
             }
             catch (Exception ex)
             {

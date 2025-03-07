@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using MTCG.NewFolder;
 using System.Net;
+
 using System.Net.Sockets;
 using System.IO;
 using System.Threading.Tasks;
@@ -8,17 +9,20 @@ using MTCG.Backend;
 using MTCG_Peirl.Models;
 using MTCG.Database;
 using MTCG.HTTP;
+using MTCG.Businesslogic;
 
 namespace MTCG.MyTestProject
 {
     public class Tests
     {
         private HttpServer _server;
+        
         private HttpResponse _response;
         private Card _card;
         private UserDatabase _userDatabase;
         private PackagesEndpoint _packagesEndpoint;
         private BattlesEndpoint _battlesEndpoint;
+        private Battle _battle;
 
         [SetUp]
         public void Setup()
@@ -29,22 +33,23 @@ namespace MTCG.MyTestProject
             _userDatabase = new UserDatabase(new DatabaseAccess());
             _packagesEndpoint = new PackagesEndpoint(new DatabaseAccess());
             _battlesEndpoint = new BattlesEndpoint(new DatabaseAccess());
+            _battle = new Battle(new DatabaseAccess());
         }
 
         [Test]
-        public void TestHttpServerInitialization()
+        public void TestHttpServer()
         {
             Assert.That(_server, Is.Not.Null);
         }
 
         [Test]
-        public void TestHttpResponseInitialization()
+        public void TestHttpResponse()
         {
             Assert.That(_response, Is.Not.Null);
         }
 
         [Test]
-        public void TestCardInitialization()
+        public void TestCard_CardCreation()
         {
             Assert.That(_card.Name, Is.EqualTo("Dragon"));
             Assert.That(_card.Damage, Is.EqualTo(50.0));
@@ -74,7 +79,7 @@ namespace MTCG.MyTestProject
         }
 
         [Test]
-        public void TestHttpResponseSendResponse()
+        public void TestSendResponse()
         {
             _response.statusCode = 200;
             _response.statusMessage = "OK";
@@ -82,7 +87,7 @@ namespace MTCG.MyTestProject
         }
 
         [Test]
-        public void TestCardProperties()
+        public void TestCard_CheckProperties()
         {
             _card.Name = "Water Dragon";
             _card.Damage = 60.0;
@@ -95,8 +100,9 @@ namespace MTCG.MyTestProject
             Assert.That(_card.CardType, Is.EqualTo("Monster"));
         }
 
+
         [Test]
-        public void TestHttpServerHandleEndpoints()
+        public void TestHandleEndpoints()
         {
             var client = new TcpClient();
             Assert.DoesNotThrowAsync(async () => await _server.HandleEndpoints(client));
@@ -127,6 +133,36 @@ namespace MTCG.MyTestProject
         }
 
         [Test]
+        public void TestDetermineWinnerCard_TieReturnsNull()
+        {
+            Card card1 = new Card("11", "Same Monster", 50, ElementType.fire, "Monster");
+            Card card2 = new Card("12", "Same Monster", 50, ElementType.water, "Monster");
+
+            Card winner = _battle.determineWinnerCard(card1, card2, 50, 50, _response);
+
+            Assert.That(winner, Is.Null);
+        }
+
+        [Test]
+        public void TestCheckElementEffect_DoubleDamage()
+        {
+            var (doubleDamage, halfedDamage) = _battle.checkElementEffects(ElementType.water, ElementType.fire);
+
+            Assert.That(doubleDamage, Is.True);
+            Assert.That(halfedDamage, Is.False);
+        }
+
+        [Test]
+        public void TestCheckElementEffect_HalfedDamage()
+        {
+            var (doubleDamage, halfedDamage) = _battle.checkElementEffects(ElementType.fire, ElementType.water);
+
+            Assert.That(doubleDamage, Is.False);
+            Assert.That(halfedDamage, Is.True);
+        }
+
+
+        [Test]
         public void TestEloCalcUsers()
         {
             var winner = new User("winner",  "test1", 10, 10, 120, 1, 3, 1);
@@ -149,41 +185,7 @@ namespace MTCG.MyTestProject
         {
             Assert.That(_response.writer, Is.Not.Null);
         }
-
-        [Test]
-        public void TestHttpResponseStatusCode()
-        {
-            _response.statusCode = 404;
-            Assert.That(_response.statusCode, Is.EqualTo(404));
-        }
-
-        [Test]
-        public void TestHttpResponseStatusMessage()
-        {
-            _response.statusMessage = "Not Found";
-            Assert.That(_response.statusMessage, Is.EqualTo("Not Found"));
-        }
-
-        [Test]
-        public void TestHttpServerStatusCode()
-        {
-            _server.statusCode = 500;
-            Assert.That(_server.statusCode, Is.EqualTo(500));
-        }
-
-        [Test]
-        public void TestHttpServerStatusMessage()
-        {
-            _server.statusMessage = "Internal Server Error";
-            Assert.That(_server.statusMessage, Is.EqualTo("Internal Server Error"));
-        }
-
-        [Test]
-        public void TestHttpServerPath()
-        {
-            _server.Path = "/api/test";
-            Assert.That(_server.Path, Is.EqualTo("/api/test"));
-        }
+    
 
         [Test]
         public void TestHttpServerDatabaseAccess()

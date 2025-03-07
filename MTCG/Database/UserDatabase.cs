@@ -169,6 +169,11 @@ namespace MTCG.Database
                                     battleId = reader.GetInt32(0);
                                     opponent = reader.GetInt32(1);
                                 }
+                                else
+                                {
+                                    // no battle found
+                                    Console.WriteLine("No available battle found. The player is waiting.");
+                                }
                             }
                         }
 
@@ -185,6 +190,7 @@ namespace MTCG.Database
                                 updateCommand.Parameters.AddWithValue("id", battleId);
                                 updateCommand.ExecuteNonQuery();
                             }
+                            Console.WriteLine($"Battle started between player {opponent} and player {userId}");
                         }
                         else
                         {
