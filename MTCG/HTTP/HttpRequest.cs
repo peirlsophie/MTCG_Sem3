@@ -28,12 +28,12 @@ namespace MTCG.NewFolder
         {
             string? line;
 
-            // 1.1 first line in HTTP contains the method, path, and HTTP version
+           
             line = reader.ReadLine();
             if (line != null)
             {
                 Console.WriteLine(line);
-                // extract method, path, and HTTP version
+                /
                 var firstLineParts = line.Split(' ');
                 if (firstLineParts.Length == 3)
                 {
@@ -47,31 +47,31 @@ namespace MTCG.NewFolder
                 }
             }
 
-            // 1.2 read the HTTP-headers (in HTTP after the first line, until the empty line)
-            int content_length = 0; // we need the content_length later, to be able to read the HTTP-content
+            
+            int content_length = 0; 
             while ((line = reader.ReadLine()) != null)
             {
                 Console.WriteLine(line);
                 if (line == "")
                 {
-                    break;  // empty line indicates the end of the HTTP-headers
+                    break;  
                 }
 
-                // Parse the header
+                
                 var parts = line.Split(':');
                 if (parts.Length == 2 && parts[0].Trim() == "Content-Length")
                 {
                     content_length = int.Parse(parts[1].Trim());
                 }
 
-                // Store headers in dictionary
+                
                 if (parts.Length == 2)
                 {
                     Headers[parts[0].Trim()] = parts[1].Trim();
                 }
             }
 
-            // 1.3 read the body if existing
+           
             if (content_length > 0)
             {
                 var data = new StringBuilder(content_length);
@@ -85,7 +85,7 @@ namespace MTCG.NewFolder
                         break;
                     data.Append(chars, 0, bytesRead);
                 }
-                Content = data.ToString(); // Set the content to the body of the request
+                Content = data.ToString(); 
             }
         }
 

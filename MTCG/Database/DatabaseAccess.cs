@@ -19,7 +19,7 @@ public class DatabaseAccess
                 connection.Open();
                 Console.WriteLine("Connection to the database established successfully.");
 
-                // Perform database operations here
+                
             }
             catch (Exception ex)
             {

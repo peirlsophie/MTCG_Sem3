@@ -149,7 +149,7 @@ namespace MTCG.Database
                 {
                     try
                     {
-                        // Lock the row for the first available battle to avoid simultaneous matches
+                        // lock row so there can be no simultaneous matches
                         string checkForOpponentQuery = @"
                         SELECT id, player1 
                         FROM battles 

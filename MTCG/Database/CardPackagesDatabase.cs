@@ -298,14 +298,14 @@ namespace MTCG.Database
         {
             if (cardIds == null || cardIds.Count == 0)
             {
-                return new List<string>(); // Return an empty list if no card IDs are provided
+                return new List<string>(); 
             }
 
             using (var connection = dbAccess.GetConnection())
             {
                 connection.Open();
 
-                // Use IN clause to fetch card names for the given card IDs
+                
                 string getCardNamesQuery = @"
                     SELECT name 
                     FROM cards 
@@ -320,7 +320,7 @@ namespace MTCG.Database
                     {
                         while (reader.Read())
                         {
-                            cardNames.Add(reader.GetString(0)); // Read card names
+                            cardNames.Add(reader.GetString(0)); 
                         }
                     }
                 }

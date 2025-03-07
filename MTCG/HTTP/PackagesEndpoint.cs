@@ -61,13 +61,13 @@ namespace MTCG.HTTP
                 var packageData = JsonSerializer.Deserialize<List<Card>>(request.Content, options);
                 if (packageData == null || packageData.Count != 5)
                 {
-                    response.statusCode = 400; // Bad Request
+                    response.statusCode = 400;
                     response.statusMessage = $"HTTP {response.statusCode} Invalid package data";
                     return;
                 }
                 // Save the package to the database
                 cardPackagesDb.savePackageToDatabase(packageData);
-                response.statusCode = 201; // Created
+                response.statusCode = 201; 
                 response.statusMessage = $"HTTP {response.statusCode} Package created successfully";
             }
             catch (JsonException ex)
@@ -110,7 +110,7 @@ namespace MTCG.HTTP
                     {
                         userDatabase.decreaseCoins(username);
                         cardPackagesDb.updatePurchasedPackage(username);
-                        response.statusCode = 201; // Success
+                        response.statusCode = 201; 
                         response.statusMessage = $"HTTP {response.statusCode} Package purchased successfully.";
                     }
                     else
@@ -122,7 +122,7 @@ namespace MTCG.HTTP
                 }
                 else
                 {
-                    response.statusCode = 402; // Bad Request
+                    response.statusCode = 402;
                     response.statusMessage = $"HTTP {response.statusCode} No packages available";
                 }
             }

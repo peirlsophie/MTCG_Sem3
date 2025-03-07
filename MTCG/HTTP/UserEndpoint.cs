@@ -94,7 +94,7 @@ namespace MTCG.Backend
                 }
                 catch (Exception ex)
                 {
-                    response.statusCode = 500; // Internal server error
+                    response.statusCode = 500; 
                     response.statusMessage = "An error occurred while creating the user: " + ex.Message;
                 }
             }
@@ -104,7 +104,7 @@ namespace MTCG.Backend
             using (SHA256 sha256 = SHA256.Create())
             {
                 byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return Convert.ToBase64String(hashBytes); // Storing hashed password as base64 string
+                return Convert.ToBase64String(hashBytes); 
             }
         }
 
@@ -129,12 +129,11 @@ namespace MTCG.Backend
                 return "";
             }
 
-            // Hash the provided password and compare it with the stored hash
             string hashedPassword = HashPassword(userData.Password);
 
             if (storedHash == hashedPassword)
             {
-                // Generate a token for the user (or other login success logic)
+                // generate token for the user 
                 string token = $"{userData.Username}-mtcgToken{tokenCounter++}";
                 response.statusCode = 200;
                 response.statusMessage = $"HTTP {response.statusCode} Login successful "+ token;
@@ -142,7 +141,7 @@ namespace MTCG.Backend
             }
             else
             {
-                response.statusCode = 401; // Unauthorized
+                response.statusCode = 401; 
                 response.statusMessage = $"HTTP {response.statusCode} Login failed: Incorrect password";
                 return "";
             }
@@ -168,7 +167,7 @@ namespace MTCG.Backend
                 string bio = userData["Bio"];
                 string image = userData["Image"];
 
-                //check name vom path gegen token!! noch erledigen
+                
                 string tokenUsername = packagesEndpoint.extractUsernameFromToken(request);
 
                 // check token authorization
